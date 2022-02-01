@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
-import "./interfaces/IGreeter.sol";
+import "./interfaces/IPWPegger.sol";
 
-contract Greeter is IGreeter {
+contract PWPegger is IPWPegger {
     string private greeting;
 
     constructor(string memory _greeting) {

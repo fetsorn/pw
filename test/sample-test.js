@@ -1,9 +1,9 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("Greeter", function () {
+describe("PWPegger", function () {
   it("Should return the new greeting once it's changed", async function () {
-    const Greeter = await ethers.getContractFactory("Greeter");
+    const Greeter = await ethers.getContractFactory("PWPegger");
     const greeter = await Greeter.deploy("Hello, world!");
     await greeter.deployed();
 
@@ -18,8 +18,8 @@ describe("Greeter", function () {
   });
 
   it("Should compare what GreeterMock and Greeter has same behaviour", async function () {
-    const Greeter = await ethers.getContractFactory("Greeter");
-    const GreeterMock = await ethers.getContractFactory("GreeterMock");
+    const Greeter = await ethers.getContractFactory("PWPegger");
+    const GreeterMock = await ethers.getContractFactory("PWPeggerMock");
     const greeter = await Greeter.deploy("Hello, world!");
     await greeter.deployed();
     const greeterMock = await GreeterMock.deploy("Hello, world!");
