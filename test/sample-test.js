@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("PWPeggerMock", function () {
+describe("PWPegger", function () {
 
   it("Deploy PWPeggerMock and calls callIntervention and tests getPWConfig dec", async function () {
 
@@ -41,7 +41,7 @@ describe("PWPeggerMock", function () {
 
     await expect(pwpeggerMock.connect(deployer).callIntervention(1*dec))
       .to.be.revertedWith("Error: must be admin or keeper EOA/multisig only");
-      
+
   });
 
 });
