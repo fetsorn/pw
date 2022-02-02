@@ -1,34 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-struct PWConfig { 
-    address admin;
-    address keeper;
-    address pricedon;
-    address pwpegdon;
-    address correctorup;
-    address correctordown;
-    address vault;
-    uint emergencyth;
-    uint volatilityth;
-    uint frontrunth;
-    uint decimals;
-}
+import "./lib/PWConfig.sol";
 
 interface IPWPegger {
     // admin (permissioned) - EOA or multisig account who is able to chnage configuration of the PW
-    function getAdmin() external view returns(address);
     function updAdmin(address) external; // admin only
 
     // keeper (permissioned) - EOA or multisig oracle account who is able to call sc invocation
-    function getKeeper() external view returns(address);
     function updKeeper(address) external; // admin only
 
-    // admin only is able to update DONs used as price and peg data refferences
+    // admin only is able to update DONs EACAggregatorProxy, used as price and peg data refferences
     function updCurrentDONRef(address) external; // admin only
     function updPathwayDONRef(address) external; // admin only
 
-    // admin only is able to update Corrector SCs refference 
+    // admin only is able to update Corrector SCs refference: CalibratorProxy
     // increasing gov token price on AMM during pw-intervention call
     function updCorrectorUpProxyRef(address) external; // admin only
     // decreasing gov token price on AMM during pw-intervention call
@@ -53,7 +39,10 @@ interface IPWPegger {
 
     // callIntervention is a main function initializing pw-intervention, called by keeper oracle
     // intervention is comparing keeperCurrentPrice with currentPrice to prevent frontrun
-    function callIntervention(uint keeperCurrentPrice) external; // keeper and admin
+    function callIntervention(uint _keeperCurrentPrice) external; // keeper and admin
 
     function getPWConfig() external view returns (PWConfig memory);
+
+    // counting how many times intervention succesfully happened
+    function getLastRoundNumber() external view returns (uint);
 }

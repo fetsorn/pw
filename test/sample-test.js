@@ -1,31 +1,43 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("PWPegger", function () {
-  it("Should return the new greeting once it's changed", async function () {
-    const Greeter = await ethers.getContractFactory("PWPegger");
-    const greeter = await Greeter.deploy("Hello, world!");
-    await greeter.deployed();
+describe("PWPeggerMock", function () {
 
-    expect(await greeter.greet()).to.equal("Hello, world!");
+  it("Deploy PWPeggerMock and calls callIntervention and tests getPWConfig dec", async function () {
 
-    const setGreetingTx = await greeter.setGreeting("Hola, mundo!");
+    const [deployer, admin, keeper, other] = waffle.provider.getWallets()
 
-    // wait until the transaction is mined
-    await setGreetingTx.wait();
+    const PWPeggerMock = await ethers.getContractFactory("PWPeggerMock");
+    const dec = 10**6;
+    const pwconfig = {
+      admin: admin.address,
+      keeper: keeper.address,
+      pricedonRef: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
+      pwpegdonRef: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
+      correctorup: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
+      correctordown: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
+      vault: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
+      emergencyth: 10*dec,
+      volatilityth: 4*dec,
+      frontrunth: 1*dec,
+      decimals: dec
+    }
+    const pwpeggerMock = await PWPeggerMock.deploy(pwconfig);
+    await pwpeggerMock.deployed();
 
-    expect(await greeter.greet()).to.equal("Hola, mundo!");
-  });
+    const currentConfig = await pwpeggerMock.getPWConfig();
 
-  it("Should compare what GreeterMock and Greeter has same behaviour", async function () {
-    const Greeter = await ethers.getContractFactory("PWPegger");
-    const GreeterMock = await ethers.getContractFactory("PWPeggerMock");
-    const greeter = await Greeter.deploy("Hello, world!");
-    await greeter.deployed();
-    const greeterMock = await GreeterMock.deploy("Hello, world!");
-    await greeterMock.deployed();
+    expect(await parseInt(currentConfig['decimals']))
+      .to.equal(parseInt(dec));
 
-    expect(await greeter.greet()).to.equal(await greeterMock.greet());
+    await pwpeggerMock.connect(keeper).callIntervention(1*dec);
+
+    const rnd = pwpeggerMock.getLastRoundNumber();
+
+    console.log(rnd);
+
+    // expect(await pwpeggerMock.getLastRoundNumber()).to.equal(1);
+
   });
 
 });
