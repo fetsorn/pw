@@ -32,12 +32,16 @@ describe("PWPeggerMock", function () {
 
     await pwpeggerMock.connect(keeper).callIntervention(1*dec);
 
-    const rnd = pwpeggerMock.getLastRoundNumber();
+    const rnd = await pwpeggerMock.getLastRoundNumber();
 
     console.log(rnd);
 
-    // expect(await pwpeggerMock.getLastRoundNumber()).to.equal(1);
+    await expect(pwpeggerMock.connect(other).callIntervention(1*dec))
+      .to.be.revertedWith("Error: must be admin or keeper EOA/multisig only");
 
+    await expect(pwpeggerMock.connect(deployer).callIntervention(1*dec))
+      .to.be.revertedWith("Error: must be admin or keeper EOA/multisig only");
+      
   });
 
 });
