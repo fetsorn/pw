@@ -7,7 +7,7 @@ describe("PWPegger", function () {
 
     const [deployer, admin, keeper, other] = waffle.provider.getWallets()
 
-    const PWPeggerMock = await ethers.getContractFactory("PWPeggerMock");
+    const PWPeggerMock = await ethers.getContractFactory("PWPegger");
     const dec = 10**6;
     const pwconfig = {
       admin: admin.address,
