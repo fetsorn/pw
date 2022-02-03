@@ -9,6 +9,8 @@ struct PWConfig {
     address correctorup;
     address correctordown;
     address vault;
+    address pool;
+    address token;
     uint emergencyth;
     uint volatilityth;
     uint frontrunth;

@@ -8,7 +8,7 @@ describe("PWPegger", function () {
     const [deployer, admin, keeper, other] = waffle.provider.getWallets()
 
     const PWPeggerMock = await ethers.getContractFactory("PWPegger");
-    const dec = 10**6;
+    const dec = 18;
     const pwconfig = {
       admin: admin.address,
       keeper: keeper.address,
@@ -17,9 +17,11 @@ describe("PWPegger", function () {
       correctorup: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
       correctordown: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
       vault: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
-      emergencyth: 10*dec,
-      volatilityth: 4*dec,
-      frontrunth: 1*dec,
+      pool: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
+      token: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
+      emergencyth: 8*(10**dec),
+      volatilityth: 4*(10**dec),
+      frontrunth: 1*(10**dec),
       decimals: dec
     }
     const pwpeggerMock = await PWPeggerMock.deploy(pwconfig);

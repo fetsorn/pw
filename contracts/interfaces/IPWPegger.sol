@@ -28,6 +28,10 @@ interface IPWPegger {
     function setPauseOff() external; // admin only
     function getPauseStatus() external view returns(bool);
 
+    // amm pool data
+    function updPoolRef(address) external; // admin only
+    function updTokenRef(address) external; // admin only
+
     // admin only is able to update threshold parameters in %*BASE_DECIMALS: 0.1% => 100 if BASE_DECIMALS == 10^3
     // emergency threshold used to set pause on if price and peg DONs are far from each other
     function updEmergencyTh(uint) external; // admin only

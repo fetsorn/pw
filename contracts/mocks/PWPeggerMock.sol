@@ -85,6 +85,14 @@ contract PWPeggerMock is IPWPegger {
         return statusPause;
     }
 
+    function updPoolRef(address _pool) external override onlyAdmin() {
+        pwconfig.pool = _pool;
+    }
+
+    function updTokenRef(address _token) external override onlyAdmin() {
+        pwconfig.token = _token;
+    }
+
     function updEmergencyTh(uint _newEmergencyth) external override onlyAdmin() {
         pwconfig.emergencyth = _newEmergencyth;
     }
