@@ -6,12 +6,12 @@ import "../../interfaces/dependencies/IEACAggregatorProxy.sol";
 
 contract EACAggregatorProxyMock is IEACAggregatorProxy {
 
-    int256 answer;
-    uint8 decimals;
+    int256 vanswer;
+    uint8 vdecimals;
 
     constructor(int256 _answer, uint8 _decimals){
-        answer = _answer;
-        decimals = _decimals;
+        vanswer = _answer;
+        vdecimals = _decimals;
     }
     function latestRoundData() external view override returns (
       uint80 roundId,
@@ -20,17 +20,16 @@ contract EACAggregatorProxyMock is IEACAggregatorProxy {
       uint256 updatedAt,
       uint80 answeredInRound
     ) {
-        return(1, answer, 1, 1, 1);
+
+        return(1, vanswer, 1, 1, 1);
     }
 
     function decimals() external view override returns (uint8) {
-        return(decimals);
+        return(vdecimals);
     }
 
     // mock function to test price changes
-    function mockUpdatePrice(int256 _answer) {
-        console.log("EACAggregatorProxyMock: mockUpdatePrice old price : ", answer);
-        answer = _answer;
-        console.log("EACAggregatorProxyMock: mockUpdatePrice new price : ", _answer);
+    function mockUpdatePrice(int256 _answer) public {
+        vanswer = _answer;
     }
 }

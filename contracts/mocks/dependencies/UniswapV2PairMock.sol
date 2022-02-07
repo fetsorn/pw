@@ -27,21 +27,21 @@ contract UniswapV2PairMock is IUniswapV2Pair {
 
     }
 
-    function getReserves() external view returns (uint112, uint112, uint32) {
+    function getReserves() external view override returns (uint112, uint112, uint32) {
         return(reserve0, reserve1, 0);
     }
-    function token0() external view returns (address) {
+    function token0() external view override returns (address) {
         return(vtoken0);
     }
-    function token1() external view returns (address) {
+    function token1() external view override returns (address) {
         return(vtoken1);
     }
 
-    function decimals() external pure returns (uint8) {
+    function decimals() external pure override returns (uint8) {
         uint8 _decimals = 18; //hardcoded because it's immutable const; for mock it's ok
         return(_decimals);
     }
-    function totalSupply() external view returns (uint) {
+    function totalSupply() external view override returns (uint) {
         return(vtotalSupply);
     }
 }

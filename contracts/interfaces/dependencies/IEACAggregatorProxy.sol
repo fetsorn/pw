@@ -10,6 +10,7 @@ interface IEACAggregatorProxy {
       uint256 startedAt,
       uint256 updatedAt,
       uint80 answeredInRound
-    )
-    function decimals() external view returns (uint8)
+    );
+    
+    function decimals() external view returns (uint8);
 }
