@@ -107,6 +107,14 @@ contract PWPegger is IPWPegger {
 
     function callIntervention(uint _keeperCurrentPrice) external override onlyKeeper() onlyNotPaused() {
         // TODO: main business logic will be here
+
+        // what to do: up or down
+        // how many LPs:
+        // execute:
+
+        
+
+
         round = round + 1;
         console.log("callIntervention a PWPegger with _keeperCurrentPrice:", _keeperCurrentPrice);
     }
