@@ -8,7 +8,7 @@ describe("PWPegger", function () {
     const [deployer, admin, keeper, other] = waffle.provider.getWallets()
 
     const PWPeggerMock = await ethers.getContractFactory("PWPegger");
-    const dec = 18;
+    const dec = 8 //case from https://etherscan.io/address/0xdc3ea94cd0ac27d9a86c180091e7f78c683d3699#readContract
     const pwconfig = {
       admin: admin.address,
       keeper: keeper.address,
@@ -19,9 +19,9 @@ describe("PWPegger", function () {
       vault: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
       pool: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
       token: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
-      emergencyth: 8*(10**dec),
-      volatilityth: 4*(10**dec),
-      frontrunth: 1*(10**dec),
+      emergencyth: parseInt(8*(10**dec)),
+      volatilityth: parseInt(4*(10**dec)),
+      frontrunth: parseInt(1*(10**dec)),
       decimals: dec
     }
     const pwpeggerMock = await PWPeggerMock.deploy(pwconfig);
@@ -31,19 +31,5 @@ describe("PWPegger", function () {
 
     expect(await parseInt(currentConfig['decimals']))
       .to.equal(parseInt(dec));
-
-    await pwpeggerMock.connect(keeper).callIntervention(1*dec);
-
-    const rnd = await pwpeggerMock.getLastRoundNumber();
-
-    console.log(rnd);
-
-    await expect(pwpeggerMock.connect(other).callIntervention(1*dec))
-      .to.be.revertedWith("Error: must be admin or keeper EOA/multisig only");
-
-    await expect(pwpeggerMock.connect(deployer).callIntervention(1*dec))
-      .to.be.revertedWith("Error: must be admin or keeper EOA/multisig only");
-
-  });
-
+  })
 });

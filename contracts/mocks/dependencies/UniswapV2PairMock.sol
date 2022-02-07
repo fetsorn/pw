@@ -23,8 +23,6 @@ contract UniswapV2PairMock is IUniswapV2Pair {
 
         reserve0 = _reserve0;
         reserve1 = _reserve1;
-
-
     }
 
     function getReserves() external view override returns (uint112, uint112, uint32) {
