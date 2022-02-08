@@ -6,6 +6,11 @@ import "./interfaces/IPWPegger.sol";
 import "./interfaces/lib/PWConfig.sol";
 import "./interfaces/dependencies/IEACAggregatorProxy.sol";
 
+enum EAction {
+    Up,
+    Down
+}
+
 contract PWPegger is IPWPegger {
     PWConfig private pwconfig;
     bool statusPause;
@@ -150,9 +155,15 @@ contract PWPegger is IPWPegger {
 
     function callIntervention(uint _keeperCurrentPrice) external override onlyKeeper() onlyNotPaused() {
         require(_keeperCurrentPrice > 0, 'Call Error: _keeperCurrentPrice must be higher than 0');
+        uint cPrice = _readDONPrice(pwconfig.pricedonRef);
+        uint pPrice = _readDONPrice(pwconfig.pwpegdonRef);
 
+        _checkThConditionsOrRaiseException(cPrice, pPrice);
+        _checkThFrontrunOrRaiseException(cPrice, _keeperCurrentPrice);
+        
+        EAction act = pPrice > cPrice ? EAction.Up : EAction.Down;
         // what to do: up or down
-        // how many LPs:
+        // how many LPs: g' = g*(1 - P1/P2), LP contains g/2 tokens rest will come with swap
         // execute:
 
 
