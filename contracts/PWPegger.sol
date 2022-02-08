@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "./interfaces/IPWPegger.sol";
 import "./interfaces/lib/PWConfig.sol";
+import "./interfaces/dependencies/IEACAggregatorProxy.sol";
 
 contract PWPegger is IPWPegger {
     PWConfig private pwconfig;
@@ -105,14 +106,56 @@ contract PWPegger is IPWPegger {
         pwconfig.frontrunth = _newFrontrunth;
     }
 
+    function _checkThConditionsOrRaiseException(uint _currPrice, uint _pwPrice) view internal {
+        if (_currPrice >= _pwPrice) {
+            require(_currPrice - _pwPrice < pwconfig.emergencyth, 
+                "Th Emergency Error: current price is much higher than pwPrice");
+            require(_currPrice - _pwPrice >= pwconfig.volatilityth, 
+                "Th Volatility Error: current price is not enough higher than pwPrice");
+        } else {
+            require(_pwPrice - _currPrice < pwconfig.emergencyth, 
+                "Th Emergency Error: pwPrice price is much higher than current");
+            require(_pwPrice - _currPrice >= pwconfig.volatilityth, 
+                "Th Volatility Error: pwPrice price is not enough higher than current");
+        }
+    }
+
+    function _checkThFrontrunOrRaiseException(uint _currPrice, uint _keeperPrice) view internal {
+        // additional logic to prevent frontrun attack can be added here: VRF check as an example
+        if (_currPrice >= _keeperPrice) {
+            require(_currPrice - _keeperPrice <= pwconfig.frontrunth,
+                "Th FrontRun Error: current price is much higher than keeperPrice");
+        } else {
+            require(_keeperPrice - _currPrice <= pwconfig.emergencyth, 
+                "Th Emergency Error: current price is much higher than keeperPrice");
+        }
+    }
+
+    // those functions are reading and convert data to the correct decimals for price data
+    function _readDONPrice(address _refDON) view internal returns (uint) {
+        IEACAggregatorProxy priceFeed = IEACAggregatorProxy(_refDON);
+        (            
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) = priceFeed.latestRoundData();
+        uint decimals = priceFeed.decimals();
+        require(decimals >= 0 && answer > 0, 'DON Error: price data and decimals must be higher than 0');
+        uint n = 10**pwconfig.decimals;
+        uint d = 10**decimals;
+        return (uint(answer)*n/d);
+    }
+
     function callIntervention(uint _keeperCurrentPrice) external override onlyKeeper() onlyNotPaused() {
-        // TODO: main business logic will be here
+        require(_keeperCurrentPrice > 0, 'Call Error: _keeperCurrentPrice must be higher than 0');
 
         // what to do: up or down
         // how many LPs:
         // execute:
 
-        
+
 
 
         round = round + 1;
