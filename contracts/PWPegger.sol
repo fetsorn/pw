@@ -153,6 +153,27 @@ contract PWPegger is IPWPegger {
         return (uint(answer)*n/d);
     }
 
+    function _computeLPCount2Calibrator(uint _g, uint _p1, uint _p2, uint _lps) view internal returns (uint) {
+        require(_p2 > _p1 && _p1 > 0 && _g > 0 && _lps > 0, "Error: computeLP2Calibrator wrong input args");
+        // g*P1 + u = g’*P2 + u’, where P1 is a price of g in u; u == u' =>
+        // => dg = g’ - g or dg = g*(P1/P2 - 1) => mdg = g*(1 - P1/P2)
+        uint n = 10**pwconfig.decimals;
+        uint mdg = _g*(n - _p1*n/_p2)/n;
+        uint hasToBeExtractedG = mdg/2;
+        uint hasToBeExtractedLPShare = n*hasToBeExtractedG/_g;
+        return _lps*hasToBeExtractedLPShare/n; //_lps has its own decimals
+    }
+
+    function _computeGUpRatio(
+        address _refPool, 
+        address _refToken, 
+        EAction _type, 
+        uint _currentPrice,
+        uint _pegPrice
+        ) view internal returns (uint g, uint p1, uint p2) {
+
+        }
+
     function callIntervention(uint _keeperCurrentPrice) external override onlyKeeper() onlyNotPaused() {
         require(_keeperCurrentPrice > 0, 'Call Error: _keeperCurrentPrice must be higher than 0');
         uint cPrice = _readDONPrice(pwconfig.pricedonRef);
@@ -162,8 +183,10 @@ contract PWPegger is IPWPegger {
         _checkThFrontrunOrRaiseException(cPrice, _keeperCurrentPrice);
         
         EAction act = pPrice > cPrice ? EAction.Up : EAction.Down;
+
+
         // what to do: up or down
-        // how many LPs: g' = g*(1 - P1/P2), LP contains g/2 tokens rest will come with swap
+        // how many LPs
         // execute:
 
 
