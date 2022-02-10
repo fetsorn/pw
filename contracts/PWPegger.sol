@@ -1,10 +1,13 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
 import "./interfaces/IPWPegger.sol";
+import "./interfaces/ICalibratorProxy.sol";
 import "./interfaces/lib/PWConfig.sol";
 import "./interfaces/dependencies/IEACAggregatorProxy.sol";
+import "./interfaces/dependencies/IERC20.sol";
+import "./interfaces/dependencies/IUniswapV2Pair.sol";
+
 
 enum EAction {
     Up,
@@ -153,47 +156,119 @@ contract PWPegger is IPWPegger {
         return (uint(answer)*n/d);
     }
 
-    function _computeLPCount2Calibrator(uint _g, uint _p1, uint _p2, uint _lps) view internal returns (uint) {
-        require(_p2 > _p1 && _p1 > 0 && _g > 0 && _lps > 0, "Error: computeLP2Calibrator wrong input args");
+    function _computeXLP(uint _g, uint _pRatio, uint _lps) view internal returns (uint) {
+        require(_pRatio > 0 && _g > 0 && _lps > 0, "Error: computeLP2Calibrator wrong input args");
         // g*P1 + u = g’*P2 + u’, where P1 is a price of g in u; u == u' =>
         // => dg = g’ - g or dg = g*(P1/P2 - 1) => mdg = g*(1 - P1/P2)
         uint n = 10**pwconfig.decimals;
-        uint mdg = _g*(n - _p1*n/_p2)/n;
+        uint mdg = _g*_pRatio;
         uint hasToBeExtractedG = mdg/2;
         uint hasToBeExtractedLPShare = n*hasToBeExtractedG/_g;
         return _lps*hasToBeExtractedLPShare/n; //_lps has its own decimals
     }
 
-    function _computeGUpRatio(
-        address _refPool, 
-        address _refToken, 
-        EAction _type, 
-        uint _currentPrice,
-        uint _pegPrice
-        ) view internal returns (uint g, uint p1, uint p2) {
+    function _computeXLPProxy(uint _g, uint _u, uint _p1, uint _pG2, EAction _type, uint _lpsupply) view internal returns (uint) {
+        uint n = 10*pwconfig.decimals;
+        uint pRatio;
 
+        if (_type == EAction.Up) {
+            pRatio = (n - _p1*n/_pG2)/n;
+        } else {
+            uint p1 = n*_g/_u;
+            uint p2 = n/_pG2;
+            pRatio = (n - p1*n/p2)/n;
         }
+        return _computeXLP(_g, pRatio, _lpsupply);
+    }
+
+    function _preparePWData(IUniswapV2Pair _pool, address _tokenGRef) view internal returns (uint g, uint u, uint p1, uint lps) {
+        (
+            uint112 reserve0, 
+            uint112 reserve1, 
+            uint32 blockTimestampLast
+        ) = _pool.getReserves();
+
+        address token0 = _pool.token0();
+        address token1 = _pool.token1();
+
+        bool isToken0G = token0 == _tokenGRef; //True means G is token0
+
+        address gref = isToken0G ? token0 : token1;
+        address uref = !isToken0G ? token0 : token1;
+
+        IERC20 tokenG = IERC20(gref);
+        IERC20 tokenU = IERC20(uref);
+
+        uint decimalsG = uint(tokenG.decimals());
+        uint decimalsU = uint(tokenU.decimals());
+
+        uint n = 10**pwconfig.decimals;
+
+        g = n*uint(isToken0G ? reserve0 : reserve1)/(10**decimalsG);
+        u = n*uint(!isToken0G ? reserve0 : reserve1)/(10**decimalsU);
+
+        p1 = n*u/g;
+
+        lps = _pool.totalSupply();
+
+        return (g, u, p1, lps);
+    }
 
     function callIntervention(uint _keeperCurrentPrice) external override onlyKeeper() onlyNotPaused() {
         require(_keeperCurrentPrice > 0, 'Call Error: _keeperCurrentPrice must be higher than 0');
-        uint cPrice = _readDONPrice(pwconfig.pricedonRef);
+
+        IUniswapV2Pair pool = IUniswapV2Pair(pwconfig.pool);
         uint pPrice = _readDONPrice(pwconfig.pwpegdonRef);
 
-        _checkThConditionsOrRaiseException(cPrice, pPrice);
-        _checkThFrontrunOrRaiseException(cPrice, _keeperCurrentPrice);
+        (
+            uint g, 
+            uint u, 
+            uint p1, 
+            uint lps
+        ) = _preparePWData(pool, pwconfig.token);
+
+        _checkThConditionsOrRaiseException(p1, pPrice);
+        _checkThFrontrunOrRaiseException(p1, _keeperCurrentPrice);
+
+
+        // Step-I: what to do - up or down
+        EAction act = pPrice > p1 ? EAction.Up : EAction.Down;
+
+        // Step-II: how many LPs
         
-        EAction act = pPrice > cPrice ? EAction.Up : EAction.Down;
+        uint xLPs = _computeXLPProxy(
+            g, 
+            u, 
+            p1, 
+            pPrice,
+            act, 
+            lps
+        );
 
+        // Step-II: execute:
+        
+        pool.transferFrom(pwconfig.vault, address(this), xLPs);
+        pool.approve(address(pwconfig.callibrator), xLPs);
 
-        // what to do: up or down
-        // how many LPs
-        // execute:
+        ICalibratorProxy calibrator = ICalibratorProxy(pwconfig.calibrator);
 
-
-
-
-        round = round + 1;
-        console.log("callIntervention a PWPegger with _keeperCurrentPrice:", _keeperCurrentPrice);
+        if (act == EAction.Up) {
+            calibrator.calibratePurelyViaPercentOfLPs_UP(
+                pool,
+                xLPs,
+                1,
+                1,
+                pwconfig.vault
+            );
+        } else {
+            calibrator.calibratePurelyViaPercentOfLPs_DOWN(
+                pool,
+                xLPs,
+                1,
+                1,
+                pwconfig.vault
+            );
+        }
     }
 
     function getPWConfig() external override view returns (PWConfig memory) {
