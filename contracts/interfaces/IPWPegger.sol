@@ -11,14 +11,11 @@ interface IPWPegger {
     function updKeeper(address) external; // admin only
 
     // admin only is able to update DONs EACAggregatorProxy, used as price and peg data refferences
-    function updCurrentDONRef(address) external; // admin only
     function updPathwayDONRef(address) external; // admin only
 
     // admin only is able to update Corrector SCs refference: CalibratorProxy
-    // increasing gov token price on AMM during pw-intervention call
-    function updCorrectorUpProxyRef(address) external; // admin only
-    // decreasing gov token price on AMM during pw-intervention call
-    function updCorrectorDownProxyRef(address) external; // admin only
+    // increasing/decreasing gov token price on AMM during pw-intervention call
+    function updCalibratorProxyRef(address) external; // admin only
 
     // admin only is able to update vault account associated with pw as funds and LP ops storage
     function updVaultRef(address) external; // admin only
