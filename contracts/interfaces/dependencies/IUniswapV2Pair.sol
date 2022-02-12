@@ -9,8 +9,7 @@ interface IUniswapV2Pair {
     // LP token interface
     function decimals() external pure returns (uint8);
     function totalSupply() external view returns (uint);
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-
+    // ERC20 LP interface
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
+    function approve(address _spender, uint256 _value) external returns (bool success);
 }

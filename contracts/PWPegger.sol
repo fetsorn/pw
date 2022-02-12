@@ -13,6 +13,12 @@ enum EAction {
     Up,
     Down
 }
+struct PoolData {
+    uint g;
+    uint u; 
+    uint p1; 
+    uint lp;
+}
 
 contract PWPegger is IPWPegger {
     PWConfig private pwconfig;
@@ -173,37 +179,29 @@ contract PWPegger is IPWPegger {
         return _computeXLP(_g, pRatio, _lpsupply);
     }
 
-    function _preparePWData(IUniswapV2Pair _pool, address _tokenGRef) view internal returns (uint g, uint u, uint p1, uint lps) {
+    function _preparePWData(IUniswapV2Pair _pool, address _tokenGRef) view internal returns (PoolData memory) {
         (
             uint112 reserve0, 
             uint112 reserve1, 
             uint32 blockTimestampLast
         ) = _pool.getReserves();
 
-        address token0 = _pool.token0();
-        address token1 = _pool.token1();
-
-        bool isToken0G = token0 == _tokenGRef; //True means G is token0
-
-        address gref = isToken0G ? token0 : token1;
-        address uref = !isToken0G ? token0 : token1;
-
-        IERC20 tokenG = IERC20(gref);
-        IERC20 tokenU = IERC20(uref);
+        IERC20 tokenG = IERC20(_pool.token0() == _tokenGRef ? _pool.token0() : _pool.token1());
+        IERC20 tokenU = IERC20(!(_pool.token0() == _tokenGRef) ? _pool.token0() : _pool.token1());
 
         uint decimalsG = uint(tokenG.decimals());
         uint decimalsU = uint(tokenU.decimals());
 
         uint n = 10**pwconfig.decimals;
 
-        g = n*uint(isToken0G ? reserve0 : reserve1)/(10**decimalsG);
-        u = n*uint(!isToken0G ? reserve0 : reserve1)/(10**decimalsU);
+        uint g = n*uint(_pool.token0() == _tokenGRef ? reserve0 : reserve1)/(10**decimalsG);
+        uint u = n*uint(!(_pool.token0() == _tokenGRef) ? reserve0 : reserve1)/(10**decimalsU);
 
-        p1 = n*u/g;
-
-        lps = _pool.totalSupply();
-
-        return (g, u, p1, lps);
+        return PoolData(
+            g, 
+            u, 
+            n*u/g, 
+            _pool.totalSupply());
     }
 
     function callIntervention(uint _keeperCurrentPrice) external override onlyKeeper() onlyNotPaused() {
@@ -212,29 +210,24 @@ contract PWPegger is IPWPegger {
         IUniswapV2Pair pool = IUniswapV2Pair(pwconfig.pool);
         uint pPrice = _readDONPrice(pwconfig.pwpegdonRef);
 
-        (
-            uint g, 
-            uint u, 
-            uint p1, 
-            uint lps
-        ) = _preparePWData(pool, pwconfig.token);
+        PoolData memory poolData = _preparePWData(pool, pwconfig.token);
 
-        _checkThConditionsOrRaiseException(p1, pPrice);
-        _checkThFrontrunOrRaiseException(p1, _keeperCurrentPrice);
+        _checkThConditionsOrRaiseException(poolData.p1, pPrice);
+        _checkThFrontrunOrRaiseException(poolData.p1, _keeperCurrentPrice);
 
 
         // Step-I: what to do - up or down
-        EAction act = pPrice > p1 ? EAction.Up : EAction.Down;
+        EAction act = pPrice > poolData.p1 ? EAction.Up : EAction.Down;
 
         // Step-II: how many LPs
         
         uint xLPs = _computeXLPProxy(
-            g, 
-            u, 
-            p1, 
+            poolData.g, 
+            poolData.u, 
+            poolData.p1, 
             pPrice,
             act, 
-            lps
+            poolData.lp
         );
 
         // Step-II: execute:

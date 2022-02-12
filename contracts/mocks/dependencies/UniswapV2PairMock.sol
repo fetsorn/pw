@@ -42,4 +42,11 @@ contract UniswapV2PairMock is IUniswapV2Pair {
     function totalSupply() external view override returns (uint) {
         return(vtotalSupply);
     }
+
+    function transferFrom(address _from, address _to, uint256 _value) external override returns (bool success) {
+        return true;
+    }
+    function approve(address _spender, uint256 _value) external override returns (bool success) {
+        return true;
+    }
 }
