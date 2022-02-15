@@ -1,19 +1,12 @@
-//SPDX-License-Identifier: Unlicense
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-
-// import "./interfaces/IPWPegger.sol";
-// import "./interfaces/ICalibratorProxy.sol";
-// import "./interfaces/lib/PWConfig.sol";
-// import "./interfaces/dependencies/IEACAggregatorProxy.sol";
-// import "./interfaces/dependencies/IERC20.sol";
-// import "./interfaces/dependencies/IUniswapV2Pair.sol";
 
 
 library PWLibrary {
 
   enum EAction {
-      Up,
-      Down
+    Up,
+    Down
   }
 
   function computeXLP(uint _g, uint _pRatio, uint _lps, uint decimals) internal pure returns (uint _xlps) {
@@ -32,11 +25,11 @@ library PWLibrary {
     uint pRatio;
 
     if (_type == EAction.Up) {
-        pRatio = pRatio(n, _p1, _pG2);
+      pRatio = computePRatio(n, _p1, _pG2);
     } else if (_type == EAction.Down) {
-        uint p1 = n*_g/_u;
-        uint p2 = n/_pG2;
-        pRatio = pRatio(n, p1, p2);
+      uint p1 = n*_g/_u;
+      uint p2 = n/_pG2;
+      pRatio = computePRatio(n, p1, p2);
     } else {
       revert("unknown type");
     }
@@ -44,7 +37,7 @@ library PWLibrary {
     _xlps = computeXLP(_g, pRatio, _lpsupply, decimals);
   }
 
-  function pRatio(uint n, uint p1, uint p2) internal pure returns (uint _ratio) {
+  function computePRatio(uint n, uint p1, uint p2) internal pure returns (uint _ratio) {
     return (n - p1 * n / p2 ) / n;
   }
 }

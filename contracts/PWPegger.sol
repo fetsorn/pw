@@ -3,12 +3,12 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IPWPegger.sol";
 import "./interfaces/ICalibratorProxy.sol";
-import "./interfaces/lib/PWConfig.sol";
 import "./interfaces/dependencies/IEACAggregatorProxy.sol";
 import "./interfaces/dependencies/IERC20.sol";
 import "./interfaces/dependencies/IUniswapV2Pair.sol";
 
 import "./libraries/PWLibrary.sol";
+import "./libraries/PWConfig.sol";
 
 
 
@@ -145,7 +145,7 @@ contract PWPegger is IPWPegger {
         uint d = 10**decimals;
         return (uint(answer)*n/d);
     }
-    
+
     function _preparePWData(IUniswapV2Pair _pool, address _tokenGRef) view internal returns (PoolData memory) {
         (
             uint112 reserve0, 

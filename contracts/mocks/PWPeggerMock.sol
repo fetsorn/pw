@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "../interfaces/IPWPegger.sol";
-import "../interfaces/lib/PWConfig.sol";
+import "../libraries/PWConfig.sol";
 
 contract PWPeggerMock is IPWPegger {
     PWConfig private pwconfig;

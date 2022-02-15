@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "./lib/PWConfig.sol";
+import "../libraries/PWConfig.sol";
 
 interface IPWPegger {
     // admin (permissioned) - EOA or multisig account who is able to chnage configuration of the PW
