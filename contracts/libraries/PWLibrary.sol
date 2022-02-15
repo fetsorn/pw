@@ -38,6 +38,6 @@ library PWLibrary {
   }
 
   function computePRatio(uint n, uint p1, uint p2) internal pure returns (uint _ratio) {
-    return (n - p1 * n / p2 ) / n;
+    return (n - p1 * n / p2) / n;
   }
 }

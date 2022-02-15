@@ -41,27 +41,27 @@ describe("PW Pegger mock tests", () => {
   const price = valueToDecimaled(2, dec)
 
   it("PW Pegger mock", async () => {
-    console.log("PWPeggerMock deployed...")
+    // console.log("PWPeggerMock deployed...")
 
-    const config = testCaseInputs[0]
-    const { pwpeggerMock } = await prepareMock(config)
-    const currentConfig = await pwpeggerMock.getPWConfig()
+    // const config = testCaseInputs[0]
+    // const { pwpeggerMock } = await prepareMock(config)
+    // const currentConfig = await pwpeggerMock.getPWConfig()
 
-    expect(parseInt(currentConfig["decimals"])).to.equal(dec)
+    // expect(parseInt(currentConfig["decimals"])).to.equal(dec)
 
-    await pwpeggerMock.connect(keeper).callIntervention(price)
+    // await pwpeggerMock.connect(keeper).callIntervention(price)
 
-    const rnd = await pwpeggerMock.getLastRoundNumber()
+    // const rnd = await pwpeggerMock.getLastRoundNumber()
 
-    console.log(rnd)
+    // console.log(rnd)
 
-    await expect(
-      pwpeggerMock.connect(other).callIntervention(price)
-    ).to.be.revertedWith("Error: must be admin or keeper EOA/multisig only")
+    // await expect(
+    //   pwpeggerMock.connect(other).callIntervention(price)
+    // ).to.be.revertedWith("Error: must be admin or keeper EOA/multisig only")
 
-    await expect(
-      pwpeggerMock.connect(deployer).callIntervention(price)
-    ).to.be.revertedWith("Error: must be admin or keeper EOA/multisig only")
+    // await expect(
+    //   pwpeggerMock.connect(deployer).callIntervention(price)
+    // ).to.be.revertedWith("Error: must be admin or keeper EOA/multisig only")
   })
 
   type TokensProps = { name: string; symbol: string; supply: number }
