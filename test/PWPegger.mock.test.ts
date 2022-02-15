@@ -5,6 +5,8 @@ import { ethers, waffle } from "hardhat"
 import { preparePWPeggerEnvironment, PWPeggerConfig } from "./pegger"
 import { valueToDecimaled } from "./utils"
 
+import { ERC20PresetFixedSupply__factory } from "~/typechain/factories/ERC20PresetFixedSupply__factory"
+
 // actually rewrite of mock-test.js
 describe("PW Pegger mock tests", () => {
   async function prepareMock(pwconfig: PWPeggerConfig) {
@@ -60,5 +62,24 @@ describe("PW Pegger mock tests", () => {
     await expect(
       pwpeggerMock.connect(deployer).callIntervention(price)
     ).to.be.revertedWith("Error: must be admin or keeper EOA/multisig only")
+  })
+
+  type TokensProps = { name: string; symbol: string; supply: number }
+
+  it("PW Pegger mock and test formulas", async () => {
+    const erc20Factory = (await ethers.getContractFactory(
+      "ERC20PresetFixedSupply"
+    )) as ERC20PresetFixedSupply__factory
+
+    const tokenProps: Record<string, TokensProps> = {
+      gton: { name: "GTON", symbol: "GTON", supply: 1_000_000 },
+    }
+
+    const gton = await erc20Factory.deploy(
+      tokenProps.gton.name,
+      tokenProps.gton.symbol,
+      tokenProps.gton.supply,
+      deployer.address
+    )
   })
 })
