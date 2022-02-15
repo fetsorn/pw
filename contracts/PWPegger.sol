@@ -11,10 +11,6 @@ import "./interfaces/dependencies/IUniswapV2Pair.sol";
 import "./libraries/PWLibrary.sol";
 
 
-enum EAction {
-    Up,
-    Down
-}
 
 struct PoolData {
     uint g;
@@ -116,28 +112,21 @@ contract PWPegger is IPWPegger {
     }
 
     function _checkThConditionsOrRaiseException(uint _currPrice, uint _pwPrice) view internal {
-        if (_currPrice >= _pwPrice) {
-            require(_currPrice - _pwPrice < pwconfig.emergencyth, 
-                "Th Emergency Error: current price is much higher than pwPrice");
-            require(_currPrice - _pwPrice >= pwconfig.volatilityth, 
-                "Th Volatility Error: current price is not enough higher than pwPrice");
-        } else {
-            require(_pwPrice - _currPrice < pwconfig.emergencyth, 
-                "Th Emergency Error: pwPrice price is much higher than current");
-            require(_pwPrice - _currPrice >= pwconfig.volatilityth, 
-                "Th Volatility Error: pwPrice price is not enough higher than current");
-        }
+        uint priceDiff = _currPrice > _pwPrice ? _currPrice - _pwPrice : _pwPrice - _currPrice;
+
+        require(priceDiff < pwconfig.emergencyth, 
+            "Th Emergency Error: price diff exceeds emergency threshold");
+        require(priceDiff <  pwconfig.volatilityth, 
+            "Th Volatility Error: price diff exceeds volatility threshold");
     }
 
     function _checkThFrontrunOrRaiseException(uint _currPrice, uint _keeperPrice) view internal {
-        // additional logic to prevent frontrun attack can be added here: VRF check as an example
-        if (_currPrice >= _keeperPrice) {
-            require(_currPrice - _keeperPrice <= pwconfig.frontrunth,
-                "Th FrontRun Error: current price is much higher than keeperPrice");
-        } else {
-            require(_keeperPrice - _currPrice <= pwconfig.emergencyth, 
-                "Th Emergency Error: current price is much higher than keeperPrice");
-        }
+        uint priceDiff = _currPrice > _keeperPrice ? _currPrice - _keeperPrice : _keeperPrice - _currPrice;
+
+        require(priceDiff < pwconfig.frontrunth, 
+            "Th FrontRun Error: current price is much higher than keeperPrice");
+        require(priceDiff <  pwconfig.emergencyth, 
+            "Th Emergency Error: current price is much higher than keeperPrice");
     }
 
     // those functions are reading and convert data to the correct decimals for price data
@@ -156,21 +145,7 @@ contract PWPegger is IPWPegger {
         uint d = 10**decimals;
         return (uint(answer)*n/d);
     }
-
-    function _computeXLPProxy(uint _g, uint _u, uint _p1, uint _pG2, EAction _type, uint _lpsupply) view internal returns (uint) {
-        uint n = 10*pwconfig.decimals;
-        uint pRatio;
-
-        if (_type == EAction.Up) {
-            pRatio = (n - _p1*n/_pG2)/n;
-        } else {
-            uint p1 = n*_g/_u;
-            uint p2 = n/_pG2;
-            pRatio = (n - p1*n/p2)/n;
-        }
-        return PWLibrary.computeXLP(_g, pRatio, _lpsupply, pwconfig.decimals);
-    }
-
+    
     function _preparePWData(IUniswapV2Pair _pool, address _tokenGRef) view internal returns (PoolData memory) {
         (
             uint112 reserve0, 
@@ -207,29 +182,27 @@ contract PWPegger is IPWPegger {
         _checkThConditionsOrRaiseException(poolData.p1, pPrice);
         _checkThFrontrunOrRaiseException(poolData.p1, _keeperCurrentPrice);
 
-
         // Step-I: what to do - up or down
-        EAction act = pPrice > poolData.p1 ? EAction.Up : EAction.Down;
+        PWLibrary.EAction act = pPrice > poolData.p1 ? PWLibrary.EAction.Up : PWLibrary.EAction.Down;
 
         // Step-II: how many LPs
-        
-        uint xLPs = _computeXLPProxy(
+        uint xLPs = PWLibrary.computeXLPForDirection(
             poolData.g, 
             poolData.u, 
             poolData.p1, 
             pPrice,
             act, 
-            poolData.lp
+            poolData.lp,
+            pwconfig.decimals
         );
 
         // Step-II: execute:
-        
         pool.transferFrom(pwconfig.vault, address(this), xLPs);
         pool.approve(address(pwconfig.calibrator), xLPs);
 
         ICalibratorProxy calibrator = ICalibratorProxy(pwconfig.calibrator);
 
-        if (act == EAction.Up) {
+        if (act == PWLibrary.EAction.Up) {
             calibrator.calibratePurelyViaPercentOfLPs_UP(
                 pool,
                 xLPs,
@@ -237,7 +210,7 @@ contract PWPegger is IPWPegger {
                 1,
                 pwconfig.vault
             );
-        } else {
+        } else if (act == PWLibrary.EAction.Down) {
             calibrator.calibratePurelyViaPercentOfLPs_DOWN(
                 pool,
                 xLPs,
@@ -245,6 +218,8 @@ contract PWPegger is IPWPegger {
                 1,
                 pwconfig.vault
             );
+        } else {
+            revert("invalid pw action");
         }
     }
 
