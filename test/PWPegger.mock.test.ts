@@ -1,7 +1,9 @@
 import Big from "big.js"
+import { expect } from "chai"
 import { ethers, waffle } from "hardhat"
 
 import { preparePWPeggerEnvironment, PWPeggerConfig } from "./pegger"
+import { valueToDecimaled } from "./utils"
 
 // actually rewrite of mock-test.js
 describe("PW Pegger mock tests", () => {
@@ -17,6 +19,7 @@ describe("PW Pegger mock tests", () => {
 
   const [deployer, admin, keeper, other] = waffle.provider.getWallets()
 
+  const dec = 9
   const testCaseInputs = [
     {
       admin: admin.address,
@@ -26,20 +29,23 @@ describe("PW Pegger mock tests", () => {
       vault: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
       pool: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
       token: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
-      emergencyth: parseInt(8 * 10 ** dec),
-      volatilityth: parseInt(4 * 10 ** dec),
-      frontrunth: parseInt(1 * 10 ** dec),
+      emergencyth: valueToDecimaled(8, dec),
+      volatilityth: valueToDecimaled(4, dec),
+      frontrunth: valueToDecimaled(1, dec),
       decimals: dec,
     },
   ]
 
-  it("", async () => {
+  const price = valueToDecimaled(2, dec)
+
+  it("PW Pegger mock", async () => {
     console.log("PWPeggerMock deployed...")
 
+    const config = testCaseInputs[0]
     const { pwpeggerMock } = await prepareMock(config)
     const currentConfig = await pwpeggerMock.getPWConfig()
 
-    expect(parseInt(currentConfig["decimals"])).to.equal(parseInt(dec))
+    expect(parseInt(currentConfig["decimals"])).to.equal(dec)
 
     await pwpeggerMock.connect(keeper).callIntervention(price)
 
