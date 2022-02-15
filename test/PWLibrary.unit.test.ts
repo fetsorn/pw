@@ -113,14 +113,6 @@ describe("PW Library unit tests", () => {
         {
           input: {
             p1: 100000,
-            p2: 15,
-            n: 100,
-          },
-          output: "0",
-        },
-        {
-          input: {
-            p1: 100000,
             p2: 152855,
             n: 9995238,
           },

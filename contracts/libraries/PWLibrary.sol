@@ -27,8 +27,8 @@ library PWLibrary {
     if (_type == EAction.Up) {
       pRatio = computePRatio(n, _p1, _pG2);
     } else if (_type == EAction.Down) {
-      uint p1 = n*_g/_u;
-      uint p2 = n/_pG2;
+      uint p1 = n * _g / _u;
+      uint p2 = n / _pG2;
       pRatio = computePRatio(n, p1, p2);
     } else {
       revert("unknown type");
@@ -38,6 +38,6 @@ library PWLibrary {
   }
 
   function computePRatio(uint n, uint p1, uint p2) internal pure returns (uint _ratio) {
-    return (n - p1 * n / p2) / n;
+    return (n - (p1 * n / p2)) / n;
   }
 }
