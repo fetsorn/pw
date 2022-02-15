@@ -39,6 +39,7 @@ contract UniswapV2PairMock is IUniswapV2Pair {
         uint8 _decimals = 18; //hardcoded because it's immutable const; for mock it's ok
         return(_decimals);
     }
+    
     function totalSupply() external view override returns (uint) {
         return(vtotalSupply);
     }

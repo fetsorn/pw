@@ -44,7 +44,7 @@ describe("PWPeggerMock", function () {
 
         await expect(pwpeggerMock.connect(deployer).callIntervention(price))
             .to.be.revertedWith("Error: must be admin or keeper EOA/multisig only");
-        
+
     })
 
     it("Check pause on cases:", async function () {
