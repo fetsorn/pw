@@ -8,11 +8,14 @@ import "./interfaces/dependencies/IEACAggregatorProxy.sol";
 import "./interfaces/dependencies/IERC20.sol";
 import "./interfaces/dependencies/IUniswapV2Pair.sol";
 
+import "./libraries/PWLibrary.sol";
+
 
 enum EAction {
     Up,
     Down
 }
+
 struct PoolData {
     uint g;
     uint u; 
@@ -154,17 +157,6 @@ contract PWPegger is IPWPegger {
         return (uint(answer)*n/d);
     }
 
-    function _computeXLP(uint _g, uint _pRatio, uint _lps) view internal returns (uint) {
-        require(_pRatio > 0 && _g > 0 && _lps > 0, "Error: computeLP2Calibrator wrong input args");
-        // g*P1 + u = g’*P2 + u’, where P1 is a price of g in u; u == u' =>
-        // => dg = g’ - g or dg = g*(P1/P2 - 1) => mdg = g*(1 - P1/P2)
-        uint n = 10**pwconfig.decimals;
-        uint mdg = _g*_pRatio;
-        uint hasToBeExtractedG = mdg/2;
-        uint hasToBeExtractedLPShare = n*hasToBeExtractedG/_g;
-        return _lps*hasToBeExtractedLPShare/n; //_lps has its own decimals
-    }
-
     function _computeXLPProxy(uint _g, uint _u, uint _p1, uint _pG2, EAction _type, uint _lpsupply) view internal returns (uint) {
         uint n = 10*pwconfig.decimals;
         uint pRatio;
@@ -176,7 +168,7 @@ contract PWPegger is IPWPegger {
             uint p2 = n/_pG2;
             pRatio = (n - p1*n/p2)/n;
         }
-        return _computeXLP(_g, pRatio, _lpsupply);
+        return PWLibrary.computeXLP(_g, pRatio, _lpsupply, pwconfig.decimals);
     }
 
     function _preparePWData(IUniswapV2Pair _pool, address _tokenGRef) view internal returns (PoolData memory) {
