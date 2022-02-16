@@ -221,6 +221,7 @@ contract PWPegger is IPWPegger {
         } else {
             revert("invalid pw action");
         }
+        round = round + 1;
     }
 
     function getPWConfig() external override view returns (PWConfig memory) {
