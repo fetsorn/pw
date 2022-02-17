@@ -21,7 +21,7 @@ library PWLibrary {
   }
 
   function computeXLPForDirection(uint _g, uint _u, uint _p1, uint _pG2, EAction _type, uint _lpsupply, uint decimals) internal pure returns (uint _xlps) {
-    uint n = 10*decimals;
+    uint n = 10**decimals;
     uint pRatio;
 
     if (_type == EAction.Up) {

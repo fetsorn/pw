@@ -42,6 +42,7 @@ contract PWPegger is IPWPegger {
 
     constructor(PWConfig memory _pwconfig) {
         uint _dec = _pwconfig.decimals;
+
         require(
             _dec > 0 && (
                 _pwconfig.frontrunth % _dec +
