@@ -1,3 +1,4 @@
+import { valueToDecimaled } from './utils';
 import { PWLibraryMock__factory } from "./../typechain/factories/PWLibraryMock__factory"
 import { PWLibraryMock } from "./../typechain/PWLibraryMock.d"
 import { assert } from "chai"
@@ -160,8 +161,8 @@ describe("PW Library unit tests", () => {
           input: {
             g: 1,
             u: 1,
-            p1: 10000,
-            pG2: 423544,
+            p1: valueToDecimaled(10000, 18),
+            pG2: valueToDecimaled(123123, 18),
             action: EAction.Up,
             lpSupply: 1000000,
             decimals: 18,
