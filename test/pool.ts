@@ -8,6 +8,7 @@ import {
   BigNumberish,
   ContractTransaction,
   Overrides,
+  Signer,
   Wallet,
 } from "ethers"
 import { ERC20PresetFixedSupply } from "~/typechain/ERC20PresetFixedSupply"
@@ -27,7 +28,7 @@ export const defaultUniDeadline = () => 9999999999999
 
 export async function buildPool(
   wallet: any,
-  other: any,
+  feeGetter: string,
   weth: WrappedNative,
   baseToken: ERC20PresetFixedSupply,
   quoteToken: ERC20PresetFixedSupply,
@@ -37,9 +38,9 @@ export async function buildPool(
   const factoryFactory = (await ethers.getContractFactory(
     "QuickFactory"
   )) as QuickFactory__factory
-  const factory = await factoryFactory.deploy(wallet.address)
+  const factory = await factoryFactory.connect(wallet).deploy(wallet.address)
 
-  await factory.setFeeTo(other.address)
+  await factory.setFeeTo(feeGetter)
 
   const routerFactory = (await ethers.getContractFactory(
     "QuickRouter01"
@@ -57,39 +58,41 @@ export async function buildPool(
     quoteToken.address
   )
 
-  console.log({ pairAddress, createPairResult })
+  // console.log({ pairAddress, createPairResult })
 
   const pair = pairFactory.attach(pairAddress) as QuickPair
 
   // let liquidityGTON = baseTokenLiq
   // let liquidityWETH = quoteTokenLiq
-  await baseToken.approve(router.address, baseTokenLiq)
-  await quoteToken.approve(router.address, quoteTokenLiq)
+  await baseToken.connect(wallet).approve(router.address, baseTokenLiq)
+  await quoteToken.connect(wallet).approve(router.address, quoteTokenLiq)
 
   let block = await wallet.provider.getBlock("latest")
   let timestamp = block.timestamp
 
-  console.log("addliq", [
-    baseToken.address,
-    quoteToken.address,
-    baseTokenLiq,
-    quoteTokenLiq,
-    1,
-    1,
-    wallet.address,
-    timestamp + 3600,
-  ])
+  // console.log("addliq", [
+  //   baseToken.address,
+  //   quoteToken.address,
+  //   baseTokenLiq,
+  //   quoteTokenLiq,
+  //   1,
+  //   1,
+  //   wallet.address,
+  //   timestamp + 3600,
+  // ])
 
-  await router.addLiquidity(
-    baseToken.address,
-    quoteToken.address,
-    baseTokenLiq,
-    quoteTokenLiq,
-    1,
-    1,
-    wallet.address,
-    timestamp + 3600
-  )
+  await router
+    .connect(wallet)
+    .addLiquidity(
+      baseToken.address,
+      quoteToken.address,
+      baseTokenLiq,
+      quoteTokenLiq,
+      1,
+      1,
+      wallet.address,
+      timestamp + 3600
+    )
 
   // await expect(
   //   router.addLiquidity(
@@ -161,24 +164,23 @@ export type ProxyCalibrateInput = {
   base: CalibrateToken
   quote: CalibrateToken
   direction: CalibrateDirection
-  percentageOfLPs: { n: number; d: number } // 0 to 1
+  // percentageOfLPs: { n: number; d: number } // 0 to 1
+  deployer: Signer
+  feeGetter: string
 }
 
 export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
-  const [wallet] = await ethers.getSigners()
-  const other = wallet
-
   const baseToken = await deployTokenFixedSupply(
     cfg.base.name,
     cfg.base.symbol,
     cfg.mintA,
-    wallet.address
+    await cfg.deployer.getAddress()
   )
   const quoteToken = await deployTokenFixedSupply(
     cfg.quote.name,
     cfg.quote.symbol,
     cfg.mintB,
-    wallet.address
+    await cfg.deployer.getAddress()
   )
 
   const wethFactory = (await ethers.getContractFactory(
@@ -188,8 +190,8 @@ export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
   const weth = await wethFactory.deploy()
 
   const builtPoolResponse = await buildPool(
-    wallet,
-    other,
+    cfg.deployer,
+    cfg.feeGetter,
     weth,
     baseToken,
     quoteToken,
