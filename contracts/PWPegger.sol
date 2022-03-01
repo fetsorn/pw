@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IPWPegger.sol";
 import "./interfaces/ICalibratorProxy.sol";
-import "./interfaces/dependencies/IEACAggregatorProxy.sol";
-import "./interfaces/dependencies/IERC20.sol";
-import "./interfaces/dependencies/IUniswapV2Pair.sol";
+import "./interfaces/IEACAggregatorProxy.sol";
+import "./interfaces/IERC20.sol";
+import "./interfaces/IUniswapV2Pair.sol";
 
 import "./libraries/PWLibrary.sol";
 import "./libraries/PWConfig.sol";
