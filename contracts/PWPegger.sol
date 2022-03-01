@@ -44,20 +44,20 @@ contract PWPegger is IPWPegger {
         uint _dec = _pwconfig.decimals;
 
         require(
-            _dec > 0 && (
-                _pwconfig.frontrunth % _dec +
-                _pwconfig.volatilityth % _dec +
-                _pwconfig.emergencyth % _dec == 0
-            ) &&
+            _dec > 0 &&
             _pwconfig.frontrunth > 0 && 
             _pwconfig.volatilityth > _pwconfig.frontrunth &&
             _pwconfig.emergencyth > _pwconfig.volatilityth,
             "Error: wrong config parameters. Check th params and decimals"
-            );
+        );
         require(msg.sender != _pwconfig.admin, "Error: deployer cannot be an admin");
         pwconfig = _pwconfig;
         statusPause = false;
         round = 0;
+    }
+
+    function updPWConfig(PWConfig memory _pwconfig) external onlyAdmin() {
+        pwconfig = _pwconfig;
     }
 
     function updAdmin(address _newAdmin) external override onlyAdmin() {
