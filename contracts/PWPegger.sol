@@ -50,7 +50,7 @@ contract PWPegger is IPWPegger {
             _pwconfig.emergencyth > _pwconfig.volatilityth,
             "Error: wrong config parameters. Check th params and decimals"
         );
-        require(msg.sender != _pwconfig.admin, "Error: deployer cannot be an admin");
+        // require(msg.sender != _pwconfig.admin, "Error: deployer cannot be an admin");
         pwconfig = _pwconfig;
         statusPause = false;
         round = 0;

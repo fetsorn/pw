@@ -1,3 +1,5 @@
+import { Calibrator__factory } from "~/typechain/factories/Calibrator__factory"
+import { CalibratorProxy__factory } from "./../typechain/factories/CalibratorProxy__factory"
 import Big from "big.js"
 import { expect } from "chai"
 import { ethers } from "hardhat"
@@ -162,18 +164,17 @@ export type ProxyCalibrateInput = {
   percentageOfLPs: { n: number; d: number } // 0 to 1
 }
 
-
 export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
   const [wallet] = await ethers.getSigners()
   const other = wallet
 
-  const gtonToken = await deployTokenFixedSupply(
+  const baseToken = await deployTokenFixedSupply(
     cfg.base.name,
     cfg.base.symbol,
     cfg.mintA,
     wallet.address
   )
-  const usdcToken = await deployTokenFixedSupply(
+  const quoteToken = await deployTokenFixedSupply(
     cfg.quote.name,
     cfg.quote.symbol,
     cfg.mintB,
@@ -186,22 +187,23 @@ export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
 
   const weth = await wethFactory.deploy()
 
-  const { router, pair, factory, lpOwnerHoldings } = await buildPool(
+  const builtPoolResponse = await buildPool(
     wallet,
     other,
     weth,
-    gtonToken,
-    usdcToken,
+    baseToken,
+    quoteToken,
     BigNumber.from(cfg.liqA),
     BigNumber.from(cfg.liqB)
   )
+  const { router } = builtPoolResponse
 
   const calibratorFactory = (await ethers.getContractFactory(
     "Calibrator"
   )) as Calibrator__factory
 
   const calibrator = await calibratorFactory.deploy(
-    gtonToken.address,
+    baseToken.address,
     router.address,
     "QUICK"
   )
@@ -212,173 +214,16 @@ export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
 
   const calibratorProxy = await calibratorProxyFactory.deploy(
     calibrator.address,
-    gtonToken.address
+    baseToken.address
   )
 
-  const removalCoeff = cfg.percentageOfLPs
-  const lpTotalSupply = await pair.totalSupply()
-  const kLast = await pair.kLast()
-
-  console.log({ totalSupplyLp: lpTotalSupply.toString() })
-  console.log({ lpOwnerHoldings: lpOwnerHoldings.toString() })
-
-  const liqudityToRemove = lpOwnerHoldings
-    .mul(removalCoeff.n)
-    .div(removalCoeff.d)
-
-  console.log({ liqudityToRemove: mapValue(liqudityToRemove), removalCoeff })
-
-  const reservesBefore = await pair.getReserves()
-
-  console.log({
-    reservesBefore: [
-      reservesBefore[0].toString(),
-      reservesBefore[1].toString(),
-    ],
-  })
-
-  await pair.approve(calibratorProxy.address, lpTotalSupply)
-
-  console.log({
-    args: [
-      pair.address,
-      lpTotalSupply.toString(),
-      removalCoeff.n.toString(),
-      removalCoeff.d.toString(),
-      wallet.address,
-    ],
-  })
-
-  const [
-    reserveBaseAfter,
-    reserveQuoteAfter,
-    totalSupplyAfter,
-    kLastAfter,
-    amountBaseAfter,
-    amountQuoteAfter,
-  ] = await calibrator[
-    "estimateRemove(uint256,uint256,uint256,uint256,uint256)"
-  ](
-    reservesBefore[0],
-    reservesBefore[1],
-    lpTotalSupply,
-    kLast,
-    liqudityToRemove
-  )
-
-  // const calibratorEstimatedOut = await router.getAmountOut(
-  //   amountQuoteAfter,
-  //   reserveQuoteAfter,
-  //   reserveBaseAfter,
-  // )
-
-  // console.log({ calibratorEstimatedOut: mapValue(calibratorEstimatedOut) })
-
-  console.log({
-    reservesBefore: reservesBefore.slice(0, 2).map(mapValue),
-  })
-
-  console.log({
-    reserveBaseAfter: mapValue(reserveBaseAfter),
-    reserveQuoteAfter: mapValue(reserveQuoteAfter),
-    totalSupplyAfter: mapValue(totalSupplyAfter),
-    kLastAfter: mapValue(kLastAfter),
-    amountBaseAfter: mapValue(amountBaseAfter),
-    amountQuoteAfter: mapValue(amountQuoteAfter),
-  })
-
-  // remove liquidity
-  // const removeLiqAndSwap = async () => {
-  //   await pair.approve(router.address, liqudityToRemove)
-
-  //   await router.removeLiquidity(
-  //     gtonToken.address,
-  //     usdcToken.address,
-  //     liqudityToRemove,
-  //     1,
-  //     1,
-  //     wallet.address,
-  //     defaultUniDeadline()
-  //   )
-
-  //   const reservesAfterRemoval = await pair.getReserves()
-
-  //   const withdrawnBalances = {
-  //     // gtonToken: mapValue(reservesBefore[0].sub(reservesAfterRemoval[0])),
-  //     // usdcToken: mapValue(reservesBefore[1].sub(reservesAfterRemoval[1])),
-  //     gtonToken: mapValue(await gtonToken.balanceOf(wallet.address)),
-  //     usdcToken: mapValue(await usdcToken.balanceOf(wallet.address)),
-  //   }
-
-  //   console.log({
-  //     userBalances_GTON: withdrawnBalances.gtonToken,
-  //     userBalances_USDC: withdrawnBalances.usdcToken,
-  //     reservesAfterRemoval: reservesAfterRemoval.slice(0, 2).map(mapValue),
-  //   })
-
-  //   const amountOut = await router.getAmountOut(
-  //     reserveQuoteAfter,
-  //     reservesAfterRemoval[1],
-  //     reservesAfterRemoval[0]
-  //   )
-
-  //   console.log({ amountOut: mapValue(amountOut) })
-
-  //   await usdcToken.approve(router.address, reserveQuoteAfter)
-
-  //   await router.swapExactTokensForTokens(
-  //     reserveQuoteAfter,
-  //     amountOut,
-  //     [usdcToken.address, gtonToken.address],
-  //     wallet.address,
-  //     defaultUniDeadline()
-  //   )
-  // }
-
-  // await removeLiqAndSwap()
-
-  // @ts-ignore
-  let calibrateFn: (
-    pool: string,
-    _liquidity: BigNumberish,
-    n: BigNumberish,
-    d: BigNumberish,
-    to: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ) => Promise<ContractTransaction> = () => {}
-
-  // switch (cfg.direction) {
-  //   case CalibrateDirection.Down:
-  //     calibrateFn = calibratorProxy.calibratePurelyViaPercentOfLPs_DOWN
-  //   case CalibrateDirection.Up:
-  //     calibrateFn = calibratorProxy.calibratePurelyViaPercentOfLPs_UP
-  // }
-  if (cfg.direction === CalibrateDirection.Down) {
-    calibrateFn = calibratorProxy.calibratePurelyViaPercentOfLPs_DOWN
-  } else if (cfg.direction == CalibrateDirection.Up) {
-    calibrateFn = calibratorProxy.calibratePurelyViaPercentOfLPs_UP
+  return {
+    calibratorProxy,
+    calibrator,
+    builtPoolResponse,
+    baseToken,
+    quoteToken,
   }
-
-  console.log({ dir: cfg.direction })
-  await calibrateFn(
-    pair.address,
-    lpTotalSupply,
-    removalCoeff.n,
-    removalCoeff.d,
-    wallet.address
-  )
-
-  // calibrator reserves
-  console.log({
-    tag: "calibrator reserves",
-    gtonToken: mapValue(await gtonToken.balanceOf(calibrator.address)),
-    usdcToken: mapValue(await usdcToken.balanceOf(calibrator.address)),
-  })
-
-  const reservesAfter = await pair.getReserves()
-  console.log({
-    reservesBefore: [reservesAfter[0].toString(), reservesAfter[1].toString()],
-  })
 }
 
 export function inferPrice(a: number, b: number, target: number) {
