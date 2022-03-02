@@ -156,8 +156,8 @@ describe("PW Pegger behavioural tests", () => {
         liqB: new Big(150_000).mul(1e18).toFixed(),
       },
       overridePWPeggerConfig: {
-        emergencyth: new Big(1).mul(1e9).toFixed(),
-        volatilityth: new Big(1).mul(1e9).toFixed(),
+        emergencyth: new Big(3).mul(1e9).toFixed(),
+        volatilityth: new Big(2).mul(1e9).toFixed(),
         frontrunth: new Big(1).mul(1e9).toFixed(),
       },
     })
@@ -183,8 +183,8 @@ describe("PW Pegger behavioural tests", () => {
         )
       )
 
-    // await context.pwpegger
-    //   .connect(keeper)
-    //   .callIntervention(priceToPWPegRepr(innerContext.pwPegPrice))
+    await context.pwpegger
+      .connect(keeper)
+      .callIntervention(priceToPWPegRepr(innerContext.pwPegPrice))
   })
 })

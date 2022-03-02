@@ -10,6 +10,7 @@ import "./interfaces/IUniswapV2Pair.sol";
 import "./libraries/PWLibrary.sol";
 import "./libraries/PWConfig.sol";
 
+import "hardhat/console.sol";
 
 
 struct PoolData {
@@ -183,8 +184,21 @@ contract PWPegger is IPWPegger {
         _checkThConditionsOrRaiseException(poolData.p1, pPrice);
         _checkThFrontrunOrRaiseException(poolData.p1, _keeperCurrentPrice);
 
+        if (pPrice == poolData.p1) {
+            revert("no price diff");
+        }
+
         // Step-I: what to do - up or down
         PWLibrary.EAction act = pPrice > poolData.p1 ? PWLibrary.EAction.Up : PWLibrary.EAction.Down;
+
+        console.log("computing PWLibrary.computeXLPForDirection");
+        console.log("poolData.g %s", poolData.g);
+        console.log("poolData.u %s", poolData.u);
+        console.log("poolData.p1 %s", poolData.p1);
+        console.log("pPrice %s", pPrice);
+        console.log("isUp?: %s", pPrice > poolData.p1);
+        console.log("poolData.lp, %s", poolData.lp);
+        console.log("pwconfig.decimals, %s", pwconfig.decimals);
 
         // Step-II: how many LPs
         uint xLPs = PWLibrary.computeXLPForDirection(
