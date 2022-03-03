@@ -184,17 +184,40 @@ describe("PW Pegger behavioural tests", () => {
         )
       )
 
+    const poolReserves_before =
+      await context.proxyContext.builtPoolResponse.pair.getReserves()
+
+    const LPs_supplyBefore =
+      await context.proxyContext.builtPoolResponse.pair.totalSupply()
+
     await context.pwpegger
       .connect(keeper)
       .callIntervention(priceToPWPegRepr(innerContext.pwPegPrice))
+
+    const LPs_supplyAfter =
+      await context.proxyContext.builtPoolResponse.pair.totalSupply()
 
     const poolReserves =
       await context.proxyContext.builtPoolResponse.pair.getReserves()
 
     console.log({
       tag: "resultsAfter",
-      r0: poolReserves[0].toString(),
-      r1: poolReserves[1].toString(),
-    });
+      r0_before: new Big(poolReserves_before[0].toString())
+        .div(1e18)
+        .toNumber(),
+      r1_before: new Big(poolReserves_before[1].toString())
+        .div(1e18)
+        .toNumber(),
+      r0_after: new Big(poolReserves[0].toString()).div(1e18).toNumber(),
+      r1_after: new Big(poolReserves[1].toString()).div(1e18).toNumber(),
+      LPs_supplyBefore: new Big(LPs_supplyBefore.toString())
+        .div(1e18)
+        .toNumber(),
+      LPs_supplyAfter: new Big(LPs_supplyAfter.toString()).div(1e18).toNumber(),
+
+      price: new Big(poolReserves[1].toString())
+        .div(poolReserves[1].toString())
+        .toNumber(),
+    })
   })
 })
