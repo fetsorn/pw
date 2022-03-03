@@ -15,7 +15,7 @@ export default {
     ftm: {
       // url: "https://rpc.ankr.com/fantom",
       url: "https://rpcapi-tracing.fantom.network",
-      accounts: [process.env.PK],
+      accounts: process.env.PK ? [process.env.PK] : undefined,
     },
   },
   solidity: {

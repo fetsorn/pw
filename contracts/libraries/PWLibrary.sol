@@ -20,7 +20,7 @@ library PWLibrary {
     _xlps = _lps*hasToBeExtractedLPShare/n; //_lps has its own decimals
   }
 
-  function computeXLPForDirection(uint _g, uint _u, uint _p1, uint _pG2, EAction _type, uint _lpsupply, uint decimals) internal pure returns (uint _xlps) {
+  function computeXLPForDirection(uint _g, uint _u, uint _p1, uint _pG2, EAction _type, uint _lpsupply, uint decimals) internal view returns (uint _xlps) {
     uint n = 10**decimals;
     uint pRatio;
 
@@ -37,7 +37,7 @@ library PWLibrary {
     _xlps = computeXLP(_g, pRatio, _lpsupply, decimals);
   }
 
-  function computePRatio(uint n, uint p1, uint p2) internal pure returns (uint _ratio) {
-    return (n - (p1 * n / p2)) / n;
+  function computePRatio(uint n, uint p1, uint p2) internal view returns (uint _ratio) {
+    return  p1 * n / p2;
   }
 }

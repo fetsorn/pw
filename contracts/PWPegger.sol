@@ -211,6 +211,9 @@ contract PWPegger is IPWPegger {
             pwconfig.decimals
         );
 
+        console.log("xLPs, %s", xLPs);
+        console.log("pwconfig.vault, %s", pwconfig.vault);
+
         // Step-II: execute:
         pool.transferFrom(pwconfig.vault, address(this), xLPs);
         pool.approve(address(pwconfig.calibrator), xLPs);
