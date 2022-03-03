@@ -37,12 +37,12 @@ library PWLibrary {
     _xlps = computeXLP(_g, pRatio, _lpsupply, decimals);
   }
 
-  function computePRatio(uint n, uint p1, uint p2) internal view returns (uint _ratio) {
-    return  p1 * n / p2;
-    // if (p1 > p2) {
-    //   _ratio = (n * p1 / p2);
-    // } else {
-
-    // }
+function computePRatio(uint n, uint p1, uint p2) internal pure returns (uint _ratio) {
+    require(p1 > 0 && p2 > 0, "Error: computePRatio wrong input args");
+    if (p1 >= p2) {
+      return ( ( p1 * n / p2 ) - n );
+    } else {
+      return ( n - ( p1 * n / p2 ) );
+    }
   }
 }
