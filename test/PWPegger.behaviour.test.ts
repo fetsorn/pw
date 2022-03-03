@@ -162,12 +162,13 @@ describe("PW Pegger behavioural tests", () => {
       },
     })
 
+    // console.log({ mockPrice: priceToPWPegRepr(innerContext.pwPegPrice) })
     //
     // II. Push peg price to EAC
     //
     await context.pwpegdonRef
       .connect(pwpegdonRef_admin)
-      .mockUpdatePrice(priceToPWPegRepr(innerContext.pwPegPrice))
+      .mockUpdatePrice(priceToPWPegRepr(innerContext.pwPegPrice, 6 + 1))
 
     //
     // III. Call intervention from keeper
@@ -186,5 +187,14 @@ describe("PW Pegger behavioural tests", () => {
     await context.pwpegger
       .connect(keeper)
       .callIntervention(priceToPWPegRepr(innerContext.pwPegPrice))
+
+    const poolReserves =
+      await context.proxyContext.builtPoolResponse.pair.getReserves()
+
+    console.log({
+      tag: "resultsAfter",
+      r0: poolReserves[0].toString(),
+      r1: poolReserves[1].toString(),
+    });
   })
 })

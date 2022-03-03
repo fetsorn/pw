@@ -14,9 +14,9 @@ library PWLibrary {
     // g*P1 + u = g’*P2 + u’, where P1 is a price of g in u; u == u' =>
     // => dg = g’ - g or dg = g*(P1/P2 - 1) => mdg = g*(1 - P1/P2)
     uint n = 10**decimals;
-    uint mdg = _g*_pRatio;
-    uint hasToBeExtractedG = mdg/2;
-    uint hasToBeExtractedLPShare = n*hasToBeExtractedG/_g;
+    uint mdg = _g / n * _pRatio;
+    uint hasToBeExtractedG = mdg / 2;
+    uint hasToBeExtractedLPShare = n * hasToBeExtractedG / _g;
     _xlps = _lps*hasToBeExtractedLPShare/n; //_lps has its own decimals
   }
 
