@@ -39,5 +39,10 @@ library PWLibrary {
 
   function computePRatio(uint n, uint p1, uint p2) internal view returns (uint _ratio) {
     return  p1 * n / p2;
+    // if (p1 > p2) {
+    //   _ratio = (n * p1 / p2);
+    // } else {
+
+    // }
   }
 }

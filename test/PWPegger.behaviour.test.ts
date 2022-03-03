@@ -215,9 +215,13 @@ describe("PW Pegger behavioural tests", () => {
         .toNumber(),
       LPs_supplyAfter: new Big(LPs_supplyAfter.toString()).div(1e18).toNumber(),
 
-      price: new Big(poolReserves[1].toString())
-        .div(poolReserves[1].toString())
-        .toNumber(),
+      price_before:
+        new Big(poolReserves_before[0].toString()).div(1e18).toNumber() /
+        new Big(poolReserves_before[1].toString()).div(1e18).toNumber(),
+
+      price_after:
+        new Big(poolReserves[0].toString()).div(1e18).toNumber() /
+        new Big(poolReserves[1].toString()).div(1e18).toNumber(),
     })
   })
 })
