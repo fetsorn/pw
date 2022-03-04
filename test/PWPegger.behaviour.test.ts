@@ -239,7 +239,7 @@ describe("PW Pegger behavioural tests", () => {
 
     const innerContext = {
       pwPegPrices: [
-        2.15, 2.1, 2, 1.95, 1.6, 1.4, 1.7, 1.8, 2.04, 2.5, 2.9, 3.2,
+        2.15, 2.1, 2, 1.95, 1.9
       ],
     }
 
