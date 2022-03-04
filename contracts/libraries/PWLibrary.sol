@@ -27,9 +27,9 @@ library PWLibrary {
     if (_type == EAction.Up) {
       pRatio = computePRatio(n, _p1, _pG2);
     } else if (_type == EAction.Down) {
-      uint p1 = n * _g / _u;
-      uint p2 = n / _pG2;
-      pRatio = computePRatio(n, p1, p2);
+      // uint p1 = n * _g / _u;
+      // uint p2 = n / _pG2;
+      pRatio = computePRatio(n, _pG2, _p1);
     } else {
       revert("unknown type");
     }
