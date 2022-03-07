@@ -233,7 +233,8 @@ describe("PW Pegger behavioural tests", () => {
         new Big(poolReserves[1].toString()).div(1e18).toNumber(),
     })
   })
-  it("behaviour test with PW Pegger - multiple peg prices", async () => {
+  
+  it("behaviour test with PW Pegger - multiple peg prices, no threshold", async () => {
     const [deployer, keeper, pwpegdonRef_admin, vault] =
       await ethers.getSigners()
 
@@ -252,9 +253,111 @@ describe("PW Pegger behavioural tests", () => {
         liqB: new Big(150_000).mul(1e18).toFixed(),
       },
       overridePWPeggerConfig: {
-        emergencyth: new Big(3).mul(1e9).toFixed(),
-        volatilityth: new Big(2).mul(1e9).toFixed(),
-        frontrunth: new Big(1).mul(1e9).toFixed(),
+        emergencyth: new Big(3).mul(1e12).toFixed(),
+        volatilityth: new Big(2).mul(1e12).toFixed(),
+        frontrunth: new Big(1).mul(1e12).toFixed(),
+      },
+    })
+
+    // console.log({ mockPrice: priceToPWPegRepr(innerContext.pwPegPrice) })
+    //
+    // II. Push peg price to EAC
+    //
+
+    for (const pwPegPrice of innerContext.pwPegPrices) {
+      await context.pwpegdonRef
+        .connect(pwpegdonRef_admin)
+        .mockUpdatePrice(priceToPWPegRepr(pwPegPrice, 6 + 1))
+
+      //
+      // III. Call intervention from keeper
+      //
+
+      // give approve from vault
+      await context.proxyContext.builtPoolResponse.pair
+        .connect(vault)
+        .approve(
+          context.pwpegger.address,
+          await context.proxyContext.builtPoolResponse.pair.balanceOf(
+            vault.address
+          )
+        )
+
+      const poolReserves_before =
+        await context.proxyContext.builtPoolResponse.pair.getReserves()
+
+      const LPs_supplyBefore =
+        await context.proxyContext.builtPoolResponse.pair.totalSupply()
+
+      await context.pwpegger
+        .connect(keeper)
+        .callIntervention(priceToPWPegRepr(pwPegPrice))
+
+      const LPs_supplyAfter =
+        await context.proxyContext.builtPoolResponse.pair.totalSupply()
+
+      const poolReserves =
+        await context.proxyContext.builtPoolResponse.pair.getReserves()
+
+      const price_before =
+        new Big(poolReserves_before[0].toString()).div(1e18).toNumber() /
+        new Big(poolReserves_before[1].toString()).div(1e18).toNumber()
+
+      const price_after =
+        new Big(poolReserves[0].toString()).div(1e18).toNumber() /
+        new Big(poolReserves[1].toString()).div(1e18).toNumber()
+
+      console.log({
+        tag: "resultsAfter",
+
+        r0_before: new Big(poolReserves_before[0].toString())
+          .div(1e18)
+          .toNumber(),
+        r1_before: new Big(poolReserves_before[1].toString())
+          .div(1e18)
+          .toNumber(),
+        r0_after: new Big(poolReserves[0].toString()).div(1e18).toNumber(),
+        r1_after: new Big(poolReserves[1].toString()).div(1e18).toNumber(),
+        LPs_supplyBefore: new Big(LPs_supplyBefore.toString())
+          .div(1e18)
+          .toNumber(),
+        LPs_supplyAfter: new Big(LPs_supplyAfter.toString())
+          .div(1e18)
+          .toNumber(),
+
+        price_peg: pwPegPrice,
+        price_before,
+        price_after,
+        price_accuracy_with_peg: checkDiff(price_after, pwPegPrice),
+        price_accuracy_with_peg_f: `${
+          checkDiff(price_after, pwPegPrice) * 100
+        }%`,
+      })
+    }
+  })
+  
+  it("behaviour test with PW Pegger - multiple peg prices, mainnet threshold enabled", async () => {
+    const [deployer, keeper, pwpegdonRef_admin, vault] =
+      await ethers.getSigners()
+
+    const innerContext = {
+      pwPegPrices: [
+        2.15, 2.1, 2.05, 1.95, 1.9, 1.88, 1.85, 1.84
+      ],
+    }
+
+    //
+    // I. Imitate current pool price 1.5
+    //
+    context = await updateContext({
+      overrideProxyCalibrateInput: {
+        liqA: new Big(100_000).mul(1e18).toFixed(),
+        liqB: new Big(150_000).mul(1e18).toFixed(),
+      },
+      overridePWPeggerConfig: {
+        emergencyth: new Big(3).mul(1e7).toFixed(),
+        volatilityth: new Big(2).mul(1e7).toFixed(),
+        frontrunth: new Big(1).mul(1e7).toFixed(),
       },
     })
 

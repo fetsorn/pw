@@ -107,7 +107,7 @@ contract Calibrator is ICalibrator {
         // add liquidity for all quote token and have some base left
         add(pool, token);
         // send base and lp to `to`
-        retrieve(pool, to);
+        retrieve(pool, to, token);
     }
 
     function calibrateDown(
@@ -120,7 +120,7 @@ contract Calibrator is ICalibrator {
         remove(pool, token, liquidity);
         sell(pool, token, amountSell);
         add(pool, token);
-        retrieve(pool, to);
+        retrieve(pool, to, token);
     }
 
     function calibrate(
@@ -140,31 +140,7 @@ contract Calibrator is ICalibrator {
         // add liquidity for all quote token and have some base left
         add(pool, token);
         // send base and lp to `to`
-        retrieve(pool, to);
-    }
-
-    /**
-     *
-     * Fails if:
-     *  1. not enough liquidity passed on withdraw
-     * 
-     */
-    function calibrateToPrice(
-        IUniswapV2Pair pool,
-        uint256 liquidity,
-        uint256 n,
-        uint256 d,
-        address to
-    ) public {
-        // remove `liquidity`
-        // IERC20 token = tokenFromPool(pool);
-        // remove(pool, token, liquidity);
-        // // buy base for `amountBuy`
-        // buy(pool, token, amountBuy);
-        // // add liquidity for all quote token and have some base left
-        // add(pool, token);
-        // // send base and lp to `to`
-        // retrieve(pool, to);
+        retrieve(pool, to, token);
     }
 
     function removeThenBuy(
@@ -179,7 +155,7 @@ contract Calibrator is ICalibrator {
         // buy base for `amountBuy`
         buy(pool, token, amountBuy);
         // send base and lp to `to`
-        retrieve(pool, to);
+        retrieve(pool, to, token);
     }
 
     function remove(
@@ -344,10 +320,11 @@ contract Calibrator is ICalibrator {
         // log(pool, "===========   after add   ===========");
     }
 
-    function retrieve(IUniswapV2Pair pool, address to) internal {
+    function retrieve(IUniswapV2Pair pool, address to, IERC20 token) internal {
         require(to != address(0), "can't send to 0");
         pool.transfer(to, pool.balanceOf(address(this)));
         base.transfer(to, base.balanceOf(address(this)));
+        token.transfer(to, token.balanceOf(address(this)));
     }
 
     // **** ESTIMATE FUNCTIONS ****
