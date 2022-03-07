@@ -190,7 +190,7 @@ contract PWPegger is IPWPegger {
         }
 
         // Step-I: what to do - up or down
-        PWLibrary.EAction act = pPrice > poolData.p1 ? PWLibrary.EAction.Up : PWLibrary.EAction.Down;
+        PWLibrary.EAction act = PWLibrary.findDirection(poolData.p1, pPrice); //p1 - prev price, pPrice - peg price
 
         console.log("computing PWLibrary.computeXLPForDirection");
         console.log("poolData.g %s", poolData.g);
