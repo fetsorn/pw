@@ -165,9 +165,9 @@ describe("PW Pegger behavioural tests", () => {
         liqB: new Big(150_000).mul(1e18).toFixed(),
       },
       overridePWPeggerConfig: {
-        emergencyth: new Big(3).mul(1e9).toFixed(),
-        volatilityth: new Big(2).mul(1e9).toFixed(),
-        frontrunth: new Big(1).mul(1e9).toFixed(),
+        emergencyth: new Big(0.1).mul(1e6).toFixed(),
+        volatilityth: new Big(0.03).mul(1e6).toFixed(),
+        frontrunth: new Big(0.02).mul(1e6).toFixed(),
       },
     })
 
@@ -257,9 +257,9 @@ describe("PW Pegger behavioural tests", () => {
         liqB: new Big(210_000).mul(1e18).toFixed(),
       },
       overridePWPeggerConfig: {
-        emergencyth: new Big(3).mul(1e12).toFixed(),
-        volatilityth: new Big(2).mul(1e12).toFixed(),
-        frontrunth: new Big(1).mul(1e12).toFixed(),
+        emergencyth: new Big(0.1).mul(1e6).toFixed(),
+        volatilityth: new Big(0.03).mul(1e6).toFixed(),
+        frontrunth: new Big(0.02).mul(1e16).toFixed(),
       },
     })
 
@@ -361,9 +361,9 @@ describe("PW Pegger behavioural tests", () => {
         liqB: new Big(150_000).mul(1e18).toFixed(),
       },
       overridePWPeggerConfig: {
-        emergencyth: new Big(3).mul(1e7).toFixed(),
-        volatilityth: new Big(2).mul(1e7).toFixed(),
-        frontrunth: new Big(1).mul(1e7).toFixed(),
+        emergencyth: new Big(0.1).mul(1e6).toFixed(),
+        volatilityth: new Big(0.03).mul(1e6).toFixed(),
+        frontrunth: new Big(0.02).mul(1e6).toFixed(),
       },
     })
 
