@@ -9,6 +9,11 @@ import Big from "big.js"
 
 import { TestCase, TestContext } from "./unit"
 
+enum Direction {
+  Up,
+  Down,
+}
+
 describe("PW Library unit tests", () => {
   type Context = {
     pwlibrary: PWLibraryMock
@@ -37,9 +42,9 @@ describe("PW Library unit tests", () => {
   it("test computeXLP function", async () => {
     const context = await deploy()
     const { pwlibrary } = context
-    // (uint _g, uint _pRatio, uint _lps, uint decimals): uint
+    // (uint _w, uint _pRatio, uint _lps, uint decimals): uint
     type Input = {
-      g: BigNumberish
+      w: BigNumberish
       pRatio: BigNumberish
       LPs: BigNumberish
       d: BigNumberish
@@ -51,21 +56,21 @@ describe("PW Library unit tests", () => {
       testCases: [
         {
           input: { // UP (+25%)
-            g: 100000000, //10 in 6 decimals
-            pRatio: 200000, // p1 = 2 p2 = 2.5 => 1 - 2/2.5 = 0.2 => 0.2*10^6 = 200k
+            w: new Big(100).mul(1e6).toFixed(), //100 in 6 decimals
+            pRatio: new Big(0.2).mul(1e6).toFixed(), // p1 = 2 p2 = 2.5 => 1 - 2/2.5 = 0.2 => 0.2*10^6 = 200k
             LPs: 100000, //any decimals let's set 3 decimal and 100 LPs
             d: 6,
           },
-          output: "10000", //10 lps to out
+          output: "10000", //w == g, 0.2 means to extract we need 0.2*100/2 => 10, 10/100 is 10% of LPs so 10k
         },
         {
-          input: { // DOWN (-20%)
-            g: 100000000, //10 in 6 decimals
-            pRatio: 250000, // p1 = 2 p2 = 1.6 => 2/1.5 - 1 = 0.25 => 0.25*10^6 = 250k
+          input: { // DOWN (-25%)
+            w: new Big(100).mul(1e6).toFixed(), //100 in 6 decimals
+            pRatio: new Big(0.25).mul(1e6).toFixed(), // p1 = 2 p2 = 1.5 => Pu1 = 1/2, Pu2 = 1/1.5; 1 - ((1/2)/(1/1.5))
             LPs: 100000, //any decimals let's set 3 decimal and 100 LPs
             d: 6,
           },
-          output: "12500", //12.5 lps to out
+          output: "12500", //w == u, 0.25 means to extract we need 0.25*100/2 = 12.5 which is 12.5/100 12.5% of LPs
         }
       ],
       validate: (x: TestCase<Input, Output>, got: Output) => {
@@ -76,7 +81,7 @@ describe("PW Library unit tests", () => {
     for (const testcase of testContext.testCases) {
       const { input } = testcase
       const gotOutput = await pwlibrary.computeXLP(
-        input.g,
+        input.w,
         input.pRatio,
         input.LPs,
         input.d
@@ -109,10 +114,10 @@ describe("PW Library unit tests", () => {
         {
           input: {
             n: new Big(1).mul(1e6).toFixed(),
-            p1: new Big(2).mul(1e6).toFixed(),
-            p2: new Big(1.6).mul(1e6).toFixed(),
+            p1: new Big(0.5).mul(1e6).toFixed(), //p1 = 2 => 0.5
+            p2: new Big(0.67).mul(1e6).toFixed(), //p2 = 1.5 => 1/1.5
           },
-          output: "250000",
+          output: "253732", //~0.25
         },
       ],
       validate: (x: TestCase<Input, Output>, got: Output) => {
@@ -132,37 +137,34 @@ describe("PW Library unit tests", () => {
     }
   })
 
-  it("test computeXLPForDirection function", async () => {
+  it("test direction function", async () => {
+    // findDirection(uint p1, uint p2)
     const context = await deploy()
     const { pwlibrary } = context
-    // (uint _g, uint _u, uint _p1, uint _pG2, EAction _type, uint _lpsupply, uint decimals): uint
-    enum EAction {
-      Up,
-      Down,
-    }
+    // (uint n, uint p1, uint p2): uint
     type Input = {
-      g: BigNumberish
-      u: BigNumberish
+      n: BigNumberish
       p1: BigNumberish
-      pG2: BigNumberish
-      action: EAction
-      lpSupply: BigNumberish
-      decimals: BigNumberish
+      p2: BigNumberish
     }
     type Output = BigNumberish
     const testContext: TestContext<Input, Output> = {
       testCases: [
         {
           input: {
-            g: 1,
-            u: 1,
-            p1: valueToDecimaled(10000, 18),
-            pG2: valueToDecimaled(123123, 18),
-            action: EAction.Up,
-            lpSupply: 1000000,
-            decimals: 18,
+            n:  new Big(1).mul(1e6).toFixed(),
+            p1: new Big(2).mul(1e6).toFixed(),
+            p2: new Big(2.5).mul(1e6).toFixed(),
           },
-          output: "1192",
+          output: Direction.Up,
+        },
+        {
+          input: {
+            n: new Big(1).mul(1e6).toFixed(),
+            p1: new Big(2).mul(1e6).toFixed(), //p1 = 2
+            p2: new Big(1.5).mul(1e6).toFixed(), //p2 (peg) = 1.5
+          },
+          output: Direction.Down,
         },
       ],
       validate: (x: TestCase<Input, Output>, got: Output) => {
@@ -170,19 +172,15 @@ describe("PW Library unit tests", () => {
       },
     }
 
-    // for (const testcase of testContext.testCases) {
-    //   const { input } = testcase
-    //   const gotOutput = await pwlibrary.computeXLPForDirection(
-    //     input.g,
-    //     input.u,
-    //     input.p1,
-    //     input.pG2,
-    //     input.action,
-    //     input.lpSupply,
-    //     input.decimals
-    //   )
+    for (const testcase of testContext.testCases) {
+      const { input } = testcase
+      const gotOutput = await pwlibrary.findDirection(
+        input.p1,
+        input.p2,
+      )
 
-    //   testContext.validate(testcase, gotOutput)
-    // }
+      testContext.validate(testcase, gotOutput)
+    }
   })
+
 })
