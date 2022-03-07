@@ -42,7 +42,8 @@
     "build": "nuxt build",
     "start": "nuxt start",
     "generate": "nuxt generate",
-    "test:pw": "hardhat test ./test/PWPegger.behaviour.test.ts"
+    "test:pw": "hardhat test ./test/PWPegger.behaviour.test.ts",
+    "test:pw:testnet": "hardhat run --network ftmtestnet ./scripts/deploy-test-pw.ts"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.5.0",

@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import "./interfaces/ICalibrator.sol";
 
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 /// @title Calibrator
 contract Calibrator is ICalibrator {
@@ -132,8 +132,11 @@ contract Calibrator is ICalibrator {
         // remove `liquidity`
         IERC20 token = tokenFromPool(pool);
         remove(pool, token, liquidity);
+        // console.log("amountBuy: %s", amountBuy);
+        // console.log("balance before - b: %s, q: %s", base.balanceOf(address(this)), token.balanceOf(address(this)));
         // buy base for `amountBuy`
         buy(pool, token, amountBuy);
+        // console.log("balance after - b: %s, q: %s", base.balanceOf(address(this)), token.balanceOf(address(this)));
         // add liquidity for all quote token and have some base left
         add(pool, token);
         // send base and lp to `to`
@@ -210,7 +213,7 @@ contract Calibrator is ICalibrator {
                 liquidity
             );
         uint256 deadline = block.timestamp + 86400;
-        // console.log("remove liquidity", amount0, amount1, liquidity);
+        console.log("remove liquidity", amountBaseAfter, amountQuoteAfter, liquidity);
         pool.approve(address(router), liquidity);
         router.removeLiquidity(
             address(base),
@@ -272,8 +275,14 @@ contract Calibrator is ICalibrator {
 
     function add(IUniswapV2Pair pool, IERC20 token) public {
         // log(pool, "===========   before add  ===========");
-        uint256 amountQuoteAdd = token.balanceOf(address(this));
-        uint256 amountBaseAdd = base.balanceOf(address(this));
+        uint256 balanceOfToken = token.balanceOf(address(this));
+        uint256 balanceOfBase = base.balanceOf(address(this));
+
+        base.approve(address(router), balanceOfToken);
+        token.approve(address(router), balanceOfToken);
+
+        uint256 amountQuoteAdd = balanceOfToken;
+        uint256 amountBaseAdd = balanceOfBase;
 
         if (amountBaseAdd == 0 || amountQuoteAdd == 0) {
             return;
@@ -296,7 +305,31 @@ contract Calibrator is ICalibrator {
         if (amountBaseAdd == 0) {
             return;
         }
+
+        // console.log("balances base and token", balanceOfBase, balanceOfToken);
         // console.log("add liquidity", amountBaseAdd, amountQuoteAdd);
+        /**
+         * Due to a fact that after swap amountBaseAdd may be much more than balanceOfBase
+         * this `if` statement handles the case of `base` token disbalance
+         * with further recalculations.
+         *
+         * Moreover, case of `amountBaseAdd <= balanceOfBase` is handled by default.
+         */
+        if (amountBaseAdd > balanceOfBase) {
+            amountBaseAdd = balanceOfBase;
+            amountQuoteAdd = quote(
+                amountBaseAdd,
+                reserveBase,
+                reserveQuote
+            );
+            // recalculate because base is taken first into consideration on `addLiquidity`
+            amountBaseAdd = quote(
+                amountQuoteAdd,
+                reserveQuote,
+                reserveBase
+            );
+        }
+
         (uint256 amountA, uint256 amountB, uint256 liq) = router.addLiquidity(
             address(token),
             address(base),
