@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
-import "../../interfaces/dependencies/IEACAggregatorProxy.sol";
+import "../../interfaces/IEACAggregatorProxy.sol";
 
 contract EACAggregatorProxyMock is IEACAggregatorProxy {
 

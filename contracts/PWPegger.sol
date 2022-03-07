@@ -3,13 +3,14 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IPWPegger.sol";
 import "./interfaces/ICalibratorProxy.sol";
-import "./interfaces/dependencies/IEACAggregatorProxy.sol";
-import "./interfaces/dependencies/IERC20.sol";
-import "./interfaces/dependencies/IUniswapV2Pair.sol";
+import "./interfaces/IEACAggregatorProxy.sol";
+import "./interfaces/IERC20.sol";
+import "./interfaces/IUniswapV2Pair.sol";
 
 import "./libraries/PWLibrary.sol";
 import "./libraries/PWConfig.sol";
 
+import "hardhat/console.sol";
 
 
 struct PoolData {
@@ -44,20 +45,20 @@ contract PWPegger is IPWPegger {
         uint _dec = _pwconfig.decimals;
 
         require(
-            _dec > 0 && (
-                _pwconfig.frontrunth % _dec +
-                _pwconfig.volatilityth % _dec +
-                _pwconfig.emergencyth % _dec == 0
-            ) &&
+            _dec > 0 &&
             _pwconfig.frontrunth > 0 && 
             _pwconfig.volatilityth > _pwconfig.frontrunth &&
             _pwconfig.emergencyth > _pwconfig.volatilityth,
             "Error: wrong config parameters. Check th params and decimals"
-            );
-        require(msg.sender != _pwconfig.admin, "Error: deployer cannot be an admin");
+        );
+        // require(msg.sender != _pwconfig.admin, "Error: deployer cannot be an admin");
         pwconfig = _pwconfig;
         statusPause = false;
         round = 0;
+    }
+
+    function updPWConfig(PWConfig memory _pwconfig) external onlyAdmin() {
+        pwconfig = _pwconfig;
     }
 
     function updAdmin(address _newAdmin) external override onlyAdmin() {
@@ -183,8 +184,21 @@ contract PWPegger is IPWPegger {
         _checkThConditionsOrRaiseException(poolData.p1, pPrice);
         _checkThFrontrunOrRaiseException(poolData.p1, _keeperCurrentPrice);
 
+        if (pPrice == poolData.p1) {
+            revert("no price diff");
+        }
+
         // Step-I: what to do - up or down
         PWLibrary.EAction act = pPrice > poolData.p1 ? PWLibrary.EAction.Up : PWLibrary.EAction.Down;
+
+        console.log("computing PWLibrary.computeXLPForDirection");
+        console.log("poolData.g %s", poolData.g);
+        console.log("poolData.u %s", poolData.u);
+        console.log("poolData.p1 %s", poolData.p1);
+        console.log("pPrice %s", pPrice);
+        console.log("isUp?: %s", pPrice > poolData.p1);
+        console.log("poolData.lp, %s", poolData.lp);
+        console.log("pwconfig.decimals, %s", pwconfig.decimals);
 
         // Step-II: how many LPs
         uint xLPs = PWLibrary.computeXLPForDirection(
@@ -196,6 +210,9 @@ contract PWPegger is IPWPegger {
             poolData.lp,
             pwconfig.decimals
         );
+
+        console.log("xLPs, %s", xLPs);
+        console.log("pwconfig.vault, %s", pwconfig.vault);
 
         // Step-II: execute:
         pool.transferFrom(pwconfig.vault, address(this), xLPs);

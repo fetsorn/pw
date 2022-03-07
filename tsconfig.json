@@ -11,6 +11,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["./test", "./client/services", "@types/big.js", "./scripts"],
+  "include": ["./test", "./client/services", "@types/big.js", "./scripts", "./bots"],
   "files": ["./hardhat.config.ts"]
 }
