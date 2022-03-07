@@ -193,12 +193,13 @@ describe("PW Pegger behavioural tests", () => {
         )
       )
 
-    const poolReserves_before =
+    const getPoolReserves = async () =>
       await context.proxyContext.calibrator.getReserves(
         context.proxyContext.builtPoolResponse.pair.address,
         context.proxyContext.baseToken.address,
         context.proxyContext.quoteToken.address
       )
+    const poolReserves_before = await getPoolReserves()
 
     const LPs_supplyBefore =
       await context.proxyContext.builtPoolResponse.pair.totalSupply()
@@ -210,8 +211,7 @@ describe("PW Pegger behavioural tests", () => {
     const LPs_supplyAfter =
       await context.proxyContext.builtPoolResponse.pair.totalSupply()
 
-    const poolReserves =
-      await context.proxyContext.builtPoolResponse.pair.getReserves()
+    const poolReserves = await getPoolReserves()
 
     console.log({
       tag: "resultsAfter",
@@ -229,12 +229,12 @@ describe("PW Pegger behavioural tests", () => {
       LPs_supplyAfter: new Big(LPs_supplyAfter.toString()).div(1e18).toNumber(),
 
       price_before:
-        new Big(poolReserves_before[0].toString()).div(1e18).toNumber() /
-        new Big(poolReserves_before[1].toString()).div(1e18).toNumber(),
+        new Big(poolReserves_before[1].toString()).div(1e18).toNumber() /
+        new Big(poolReserves_before[0].toString()).div(1e18).toNumber(),
 
       price_after:
-        new Big(poolReserves[0].toString()).div(1e18).toNumber() /
-        new Big(poolReserves[1].toString()).div(1e18).toNumber(),
+        new Big(poolReserves[1].toString()).div(1e18).toNumber() /
+        new Big(poolReserves[0].toString()).div(1e18).toNumber(),
     })
   })
 
@@ -287,12 +287,13 @@ describe("PW Pegger behavioural tests", () => {
           )
         )
 
-      const poolReserves_before =
+      const getPoolReserves = async () =>
         await context.proxyContext.calibrator.getReserves(
           context.proxyContext.builtPoolResponse.pair.address,
           context.proxyContext.baseToken.address,
           context.proxyContext.quoteToken.address
         )
+      const poolReserves_before = await getPoolReserves()
 
       const LPs_supplyBefore =
         await context.proxyContext.builtPoolResponse.pair.totalSupply()
@@ -304,8 +305,7 @@ describe("PW Pegger behavioural tests", () => {
       const LPs_supplyAfter =
         await context.proxyContext.builtPoolResponse.pair.totalSupply()
 
-      const poolReserves =
-        await context.proxyContext.builtPoolResponse.pair.getReserves()
+      const poolReserves = await getPoolReserves()
 
       const price_before =
         new Big(poolReserves_before[1].toString()).div(1e18).toNumber() /
@@ -391,13 +391,14 @@ describe("PW Pegger behavioural tests", () => {
           )
         )
 
-      const poolReserves_before =
+      const getPoolReserves = async () =>
         await context.proxyContext.calibrator.getReserves(
           context.proxyContext.builtPoolResponse.pair.address,
           context.proxyContext.baseToken.address,
           context.proxyContext.quoteToken.address
         )
 
+      const poolReserves_before = await getPoolReserves()
       const LPs_supplyBefore =
         await context.proxyContext.builtPoolResponse.pair.totalSupply()
 
@@ -408,9 +409,7 @@ describe("PW Pegger behavioural tests", () => {
       const LPs_supplyAfter =
         await context.proxyContext.builtPoolResponse.pair.totalSupply()
 
-      const poolReserves =
-        await context.proxyContext.builtPoolResponse.pair.getReserves()
-
+      const poolReserves = await getPoolReserves()
       const price_before =
         new Big(poolReserves_before[1].toString()).div(1e18).toNumber() /
         new Big(poolReserves_before[0].toString()).div(1e18).toNumber()
@@ -418,6 +417,27 @@ describe("PW Pegger behavioural tests", () => {
       const price_after =
         new Big(poolReserves[1].toString()).div(1e18).toNumber() /
         new Big(poolReserves[0].toString()).div(1e18).toNumber()
+
+      const poolsBalanceOf = async (addr: string) => {
+        return [
+          (await context.proxyContext.baseToken.balanceOf(addr)).toString(),
+          (await context.proxyContext.quoteToken.balanceOf(addr)).toString(),
+        ]
+      }
+
+      const calib_proxy_balance_of = await poolsBalanceOf(
+        context.proxyContext.calibratorProxy.address
+      )
+      const calib_balance_of = await poolsBalanceOf(
+        context.proxyContext.calibrator.address
+      )
+      const pegger_balance_of = await poolsBalanceOf(context.pwpegger.address)
+
+      console.log({
+        calib_proxy_balance_of,
+        calib_balance_of,
+        pegger_balance_of,
+      })
 
       console.log({
         tag: "resultsAfter",

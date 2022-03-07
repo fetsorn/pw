@@ -251,71 +251,71 @@ contract Calibrator is ICalibrator {
 
     function add(IUniswapV2Pair pool, IERC20 token) public {
         // log(pool, "===========   before add  ===========");
-        uint256 balanceOfToken = token.balanceOf(address(this));
-        uint256 balanceOfBase = base.balanceOf(address(this));
+        // uint256 balanceOfToken = token.balanceOf(address(this));
+        // uint256 balanceOfBase = base.balanceOf(address(this));
 
-        base.approve(address(router), balanceOfToken);
-        token.approve(address(router), balanceOfToken);
+        // base.approve(address(router), balanceOfToken);
+        // token.approve(address(router), balanceOfToken);
 
-        uint256 amountQuoteAdd = balanceOfToken;
-        uint256 amountBaseAdd = balanceOfBase;
+        // uint256 amountQuoteAdd = balanceOfToken;
+        // uint256 amountBaseAdd = balanceOfBase;
 
-        if (amountBaseAdd == 0 || amountQuoteAdd == 0) {
-            return;
-        }
+        // if (amountBaseAdd == 0 || amountQuoteAdd == 0) {
+        //     return;
+        // }
 
-        address[] memory pathToBase = new address[](2);
-        pathToBase[0] = address(token);
-        pathToBase[1] = address(base);
-        uint256 deadline = block.timestamp + 86400;
-        (uint256 reserveBase, uint256 reserveQuote) = getReserves(
-            pool,
-            address(base),
-            address(token)
-        );
-        amountBaseAdd = quote(
-            amountQuoteAdd,
-            reserveQuote,
-            reserveBase
-        );
-        if (amountBaseAdd == 0) {
-            return;
-        }
+        // address[] memory pathToBase = new address[](2);
+        // pathToBase[0] = address(token);
+        // pathToBase[1] = address(base);
+        // uint256 deadline = block.timestamp + 86400;
+        // (uint256 reserveBase, uint256 reserveQuote) = getReserves(
+        //     pool,
+        //     address(base),
+        //     address(token)
+        // );
+        // amountBaseAdd = quote(
+        //     amountQuoteAdd,
+        //     reserveQuote,
+        //     reserveBase
+        // );
+        // if (amountBaseAdd == 0) {
+        //     return;
+        // }
 
-        // console.log("balances base and token", balanceOfBase, balanceOfToken);
-        // console.log("add liquidity", amountBaseAdd, amountQuoteAdd);
-        /**
-         * Due to a fact that after swap amountBaseAdd may be much more than balanceOfBase
-         * this `if` statement handles the case of `base` token disbalance
-         * with further recalculations.
-         *
-         * Moreover, case of `amountBaseAdd <= balanceOfBase` is handled by default.
-         */
-        if (amountBaseAdd > balanceOfBase) {
-            amountBaseAdd = balanceOfBase;
-            amountQuoteAdd = quote(
-                amountBaseAdd,
-                reserveBase,
-                reserveQuote
-            );
-            // recalculate because base is taken first into consideration on `addLiquidity`
-            amountBaseAdd = quote(
-                amountQuoteAdd,
-                reserveQuote,
-                reserveBase
-            );
-        }
+        // // console.log("balances base and token", balanceOfBase, balanceOfToken);
+        // // console.log("add liquidity", amountBaseAdd, amountQuoteAdd);
+        // /**
+        //  * Due to a fact that after swap amountBaseAdd may be much more than balanceOfBase
+        //  * this `if` statement handles the case of `base` token disbalance
+        //  * with further recalculations.
+        //  *
+        //  * Moreover, case of `amountBaseAdd <= balanceOfBase` is handled by default.
+        //  */
+        // if (amountBaseAdd > balanceOfBase) {
+        //     amountBaseAdd = balanceOfBase;
+        //     amountQuoteAdd = quote(
+        //         amountBaseAdd,
+        //         reserveBase,
+        //         reserveQuote
+        //     );
+        //     // recalculate because base is taken first into consideration on `addLiquidity`
+        //     amountBaseAdd = quote(
+        //         amountQuoteAdd,
+        //         reserveQuote,
+        //         reserveBase
+        //     );
+        // }
 
-        (uint256 amountA, uint256 amountB, uint256 liq) = router.addLiquidity(
-            address(token),
-            address(base),
-            amountQuoteAdd,
-            amountBaseAdd,
-            amountQuoteAdd,
-            amountBaseAdd,
-            address(this),
-            deadline
-        );
+        // (uint256 amountA, uint256 amountB, uint256 liq) = router.addLiquidity(
+        //     address(token),
+        //     address(base),
+        //     amountQuoteAdd,
+        //     amountBaseAdd,
+        //     amountQuoteAdd,
+        //     amountBaseAdd,
+        //     address(this),
+        //     deadline
+        // );
         // console.log("add liquidity", amountA, amountB, liq);
         // log(pool, "===========   after add   ===========");
     }
