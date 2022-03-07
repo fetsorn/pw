@@ -5,6 +5,8 @@ import { assert } from "chai"
 import { BigNumberish } from "ethers"
 import { ethers } from "hardhat"
 
+import Big from "big.js"
+
 import { TestCase, TestContext } from "./unit"
 
 describe("PW Library unit tests", () => {
@@ -98,19 +100,19 @@ describe("PW Library unit tests", () => {
       testCases: [
         {
           input: {
-            p1: 10,
-            p2: 15,
-            n: 100,
+            n:  new Big(1).mul(1e6).toFixed(),
+            p1: new Big(2).mul(1e6).toFixed(),
+            p2: new Big(2.5).mul(1e6).toFixed(),
           },
-          output: "0",
+          output: "200000",
         },
         {
           input: {
-            p1: 100000,
-            p2: 152855,
-            n: 9995238,
+            n: new Big(1).mul(1e6).toFixed(),
+            p1: new Big(2).mul(1e6).toFixed(),
+            p2: new Big(1.6).mul(1e6).toFixed(),
           },
-          output: "0",
+          output: "250000",
         },
       ],
       validate: (x: TestCase<Input, Output>, got: Output) => {
@@ -121,9 +123,9 @@ describe("PW Library unit tests", () => {
     for (const testcase of testContext.testCases) {
       const { input } = testcase
       const gotOutput = await pwlibrary.computePRatio(
+        input.n,
         input.p1,
         input.p2,
-        input.n
       )
 
       testContext.validate(testcase, gotOutput)
