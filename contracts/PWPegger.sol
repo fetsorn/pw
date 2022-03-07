@@ -118,7 +118,7 @@ contract PWPegger is IPWPegger {
 
         require(priceDiff < pwconfig.emergencyth, 
             "Th Emergency Error: price diff exceeds emergency threshold");
-        require(priceDiff <  pwconfig.volatilityth, 
+        require(priceDiff > pwconfig.volatilityth, 
             "Th Volatility Error: price diff exceeds volatility threshold");
     }
 
@@ -127,7 +127,7 @@ contract PWPegger is IPWPegger {
 
         require(priceDiff < pwconfig.frontrunth, 
             "Th FrontRun Error: current price is much higher than keeperPrice");
-        require(priceDiff <  pwconfig.emergencyth, 
+        require(priceDiff < pwconfig.emergencyth, 
             "Th Emergency Error: current price is much higher than keeperPrice");
     }
 
@@ -170,7 +170,8 @@ contract PWPegger is IPWPegger {
             g, 
             u, 
             n*u/g, 
-            _pool.totalSupply());
+            _pool.totalSupply()
+        );
     }
 
     function callIntervention(uint _keeperCurrentPrice) external override onlyKeeper() onlyNotPaused() {

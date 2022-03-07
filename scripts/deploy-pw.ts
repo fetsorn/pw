@@ -18,6 +18,8 @@ async function mutatePWConfig(addr: string, config: PWPeggerConfig) {
 }
 
 async function mn() {
+  const hre = require("hardhat")
+
   const [wallet] = await ethers.getSigners()
 
   const factory = (await ethers.getContractFactory(
@@ -33,7 +35,7 @@ async function mn() {
 
   const config: PWPeggerConfig = {
     // admin: string
-    admin: '0xEab9ff1625eD15E88fb2bCdbb4f325AA4742972d',
+    admin: "0xEab9ff1625eD15E88fb2bCdbb4f325AA4742972d",
     // keeper: string
     keeper: pworacle,
     // pwpegdonRef: string
@@ -61,7 +63,6 @@ async function mn() {
     decimals: 6,
   }
 
-
   const response = await factory.connect(wallet).deploy(config, {
     gasLimit: 5_000_000,
     gasPrice: new Big(400).mul(1e9).toNumber(),
@@ -69,6 +70,12 @@ async function mn() {
   const r = await response.deployed()
 
   console.log({ config, pwpegger: r.address })
+
+  console.log("verifying...")
+  await hre.run("verify:verify", {
+    address: r.address,
+    constructorArguments: [config],
+  })
 }
 
 mn()
