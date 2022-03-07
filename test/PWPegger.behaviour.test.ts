@@ -194,7 +194,11 @@ describe("PW Pegger behavioural tests", () => {
       )
 
     const poolReserves_before =
-      await context.proxyContext.builtPoolResponse.pair.getReserves()
+      await context.proxyContext.calibrator.getReserves(
+        context.proxyContext.builtPoolResponse.pair.address,
+        context.proxyContext.baseToken.address,
+        context.proxyContext.quoteToken.address
+      )
 
     const LPs_supplyBefore =
       await context.proxyContext.builtPoolResponse.pair.totalSupply()
@@ -233,7 +237,7 @@ describe("PW Pegger behavioural tests", () => {
         new Big(poolReserves[1].toString()).div(1e18).toNumber(),
     })
   })
-  
+
   it("behaviour test with PW Pegger - multiple peg prices, no threshold", async () => {
     const [deployer, keeper, pwpegdonRef_admin, vault] =
       await ethers.getSigners()
@@ -250,7 +254,7 @@ describe("PW Pegger behavioural tests", () => {
     context = await updateContext({
       overrideProxyCalibrateInput: {
         liqA: new Big(100_000).mul(1e18).toFixed(),
-        liqB: new Big(150_000).mul(1e18).toFixed(),
+        liqB: new Big(210_000).mul(1e18).toFixed(),
       },
       overridePWPeggerConfig: {
         emergencyth: new Big(3).mul(1e12).toFixed(),
@@ -284,7 +288,11 @@ describe("PW Pegger behavioural tests", () => {
         )
 
       const poolReserves_before =
-        await context.proxyContext.builtPoolResponse.pair.getReserves()
+        await context.proxyContext.calibrator.getReserves(
+          context.proxyContext.builtPoolResponse.pair.address,
+          context.proxyContext.baseToken.address,
+          context.proxyContext.quoteToken.address
+        )
 
       const LPs_supplyBefore =
         await context.proxyContext.builtPoolResponse.pair.totalSupply()
@@ -300,12 +308,12 @@ describe("PW Pegger behavioural tests", () => {
         await context.proxyContext.builtPoolResponse.pair.getReserves()
 
       const price_before =
-        new Big(poolReserves_before[0].toString()).div(1e18).toNumber() /
-        new Big(poolReserves_before[1].toString()).div(1e18).toNumber()
+        new Big(poolReserves_before[1].toString()).div(1e18).toNumber() /
+        new Big(poolReserves_before[0].toString()).div(1e18).toNumber()
 
       const price_after =
-        new Big(poolReserves[0].toString()).div(1e18).toNumber() /
-        new Big(poolReserves[1].toString()).div(1e18).toNumber()
+        new Big(poolReserves[1].toString()).div(1e18).toNumber() /
+        new Big(poolReserves[0].toString()).div(1e18).toNumber()
 
       console.log({
         tag: "resultsAfter",
@@ -335,15 +343,13 @@ describe("PW Pegger behavioural tests", () => {
       })
     }
   })
-  
+
   it("behaviour test with PW Pegger - multiple peg prices, mainnet threshold enabled", async () => {
     const [deployer, keeper, pwpegdonRef_admin, vault] =
       await ethers.getSigners()
 
     const innerContext = {
-      pwPegPrices: [
-        2.15, 2.1, 2.05, 1.95, 1.9, 1.88, 1.85, 1.84
-      ],
+      pwPegPrices: [2.15, 2.1, 2.05, 1.95, 1.9, 1.88, 1.85, 1.84],
     }
 
     //
@@ -386,7 +392,11 @@ describe("PW Pegger behavioural tests", () => {
         )
 
       const poolReserves_before =
-        await context.proxyContext.builtPoolResponse.pair.getReserves()
+        await context.proxyContext.calibrator.getReserves(
+          context.proxyContext.builtPoolResponse.pair.address,
+          context.proxyContext.baseToken.address,
+          context.proxyContext.quoteToken.address
+        )
 
       const LPs_supplyBefore =
         await context.proxyContext.builtPoolResponse.pair.totalSupply()
@@ -402,12 +412,12 @@ describe("PW Pegger behavioural tests", () => {
         await context.proxyContext.builtPoolResponse.pair.getReserves()
 
       const price_before =
-        new Big(poolReserves_before[0].toString()).div(1e18).toNumber() /
-        new Big(poolReserves_before[1].toString()).div(1e18).toNumber()
+        new Big(poolReserves_before[1].toString()).div(1e18).toNumber() /
+        new Big(poolReserves_before[0].toString()).div(1e18).toNumber()
 
       const price_after =
-        new Big(poolReserves[0].toString()).div(1e18).toNumber() /
-        new Big(poolReserves[1].toString()).div(1e18).toNumber()
+        new Big(poolReserves[1].toString()).div(1e18).toNumber() /
+        new Big(poolReserves[0].toString()).div(1e18).toNumber()
 
       console.log({
         tag: "resultsAfter",
