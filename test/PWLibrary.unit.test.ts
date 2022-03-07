@@ -44,34 +44,27 @@ describe("PW Library unit tests", () => {
     }
     type Output = BigNumberish
     const testContext: TestContext<Input, Output> = {
+      //g and pRatio must be same decimaled (d), LPs - any decimals
+      // //interv up 1 - p1/p2 or p1/p2 - 1 inerv down
       testCases: [
         {
-          input: {
-            g: 100,
-            pRatio: 15,
-            LPs: 159,
-            d: 18,
+          input: { // UP (+25%)
+            g: 100000000, //10 in 6 decimals
+            pRatio: 200000, // p1 = 2 p2 = 2.5 => 1 - 2/2.5 = 0.2 => 0.2*10^6 = 200k
+            LPs: 100000, //any decimals let's set 3 decimal and 100 LPs
+            d: 6,
           },
-          output: "1192",
+          output: "10000", //10 lps to out
         },
         {
-          input: {
-            g: 582,
-            pRatio: 55,
-            LPs: 8523,
-            d: 18,
+          input: { // DOWN (-20%)
+            g: 100000000, //10 in 6 decimals
+            pRatio: 250000, // p1 = 2 p2 = 1.6 => 2/1.5 - 1 = 0.25 => 0.25*10^6 = 250k
+            LPs: 100000, //any decimals let's set 3 decimal and 100 LPs
+            d: 6,
           },
-          output: "234382",
-        },
-        {
-          input: {
-            g: 100,
-            pRatio: 515,
-            LPs: 352,
-            d: 18,
-          },
-          output: "90640",
-        },
+          output: "12500", //12.5 lps to out
+        }
       ],
       validate: (x: TestCase<Input, Output>, got: Output) => {
         assert.equal(x.output, got, "expected output must match got values")
