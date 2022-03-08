@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-
 library PWLibrary {
 
   enum EAction {
@@ -30,7 +29,7 @@ library PWLibrary {
       pRatio = computePRatio(n, _pG1, _pG2); // basic case: P1 & P2
       _xlps = computeXLP(_g, pRatio, _lpsupply, decimals); //withdrawable token is _g
     } else if (_type == EAction.Down) {
-      pRatio = computePRatio(n, n / _pG1, n / _pG2); // reverse prices: Pu1 & Pu2
+      pRatio = computePRatio(n, n**2 / _pG1, n**2 / _pG2); // reverse prices: Pu1 & Pu2
       _xlps = computeXLP(_u, pRatio, _lpsupply, decimals); //withdrawable token is _u
     } else {
       revert("Error: unknown type");
