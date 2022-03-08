@@ -114,20 +114,23 @@ contract PWPegger is IPWPegger {
     }
 
     function _checkThConditionsOrRaiseException(uint _currPrice, uint _pwPrice) view internal {
-        uint priceDiff = _currPrice > _pwPrice ? _currPrice - _pwPrice : _pwPrice - _currPrice;
-
+        // _currPrice and _pwPrice must be same decimals
+        uint n = 10**pwconfig.decimals;
+        uint priceDiff = _currPrice > _pwPrice ? n*(_currPrice - _pwPrice)/_currPrice : n*(_pwPrice - _currPrice)/_currPrice;
         require(priceDiff < pwconfig.emergencyth, 
             "Th Emergency Error: price diff exceeds emergency threshold");
-        require(priceDiff <  pwconfig.volatilityth, 
+        require(priceDiff >= pwconfig.volatilityth, 
             "Th Volatility Error: price diff exceeds volatility threshold");
     }
 
     function _checkThFrontrunOrRaiseException(uint _currPrice, uint _keeperPrice) view internal {
-        uint priceDiff = _currPrice > _keeperPrice ? _currPrice - _keeperPrice : _keeperPrice - _currPrice;
+        // _currPrice and _keeperPrice must be same decimals
+        uint n = 10**pwconfig.decimals;
+        uint priceDiff = _currPrice > _keeperPrice ? n*(_currPrice - _keeperPrice)/_keeperPrice : n*(_keeperPrice - _currPrice)/_keeperPrice;
 
-        require(priceDiff < pwconfig.frontrunth, 
+        require(priceDiff <= pwconfig.frontrunth, 
             "Th FrontRun Error: current price is much higher than keeperPrice");
-        require(priceDiff <  pwconfig.emergencyth, 
+        require(priceDiff < pwconfig.emergencyth, 
             "Th Emergency Error: current price is much higher than keeperPrice");
     }
 
@@ -170,7 +173,8 @@ contract PWPegger is IPWPegger {
             g, 
             u, 
             n*u/g, 
-            _pool.totalSupply());
+            _pool.totalSupply()
+        );
     }
 
     function callIntervention(uint _keeperCurrentPrice) external override onlyKeeper() onlyNotPaused() {
@@ -189,7 +193,7 @@ contract PWPegger is IPWPegger {
         }
 
         // Step-I: what to do - up or down
-        PWLibrary.EAction act = pPrice > poolData.p1 ? PWLibrary.EAction.Up : PWLibrary.EAction.Down;
+        PWLibrary.EAction act = PWLibrary.findDirection(poolData.p1, pPrice); //p1 - prev price, pPrice - peg price
 
         console.log("computing PWLibrary.computeXLPForDirection");
         console.log("poolData.g %s", poolData.g);

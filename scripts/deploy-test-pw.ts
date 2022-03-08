@@ -157,7 +157,7 @@ async function main() {
   context = await updateContext({
     overrideProxyCalibrateInput: {
       liqA: new Big(100_000).mul(1e18).toFixed(),
-      liqB: new Big(150_000).mul(1e18).toFixed(),
+      liqB: new Big(210_000).mul(1e18).toFixed(),
     },
     overridePWPeggerConfig: {
       emergencyth: new Big(3).mul(1e9).toFixed(),
@@ -191,7 +191,11 @@ async function main() {
       )
 
     const poolReserves_before =
-      await context.proxyContext.builtPoolResponse.pair.getReserves()
+      await context.proxyContext.calibrator.getReserves(
+        context.proxyContext.builtPoolResponse.pair.address,
+        context.proxyContext.baseToken.address,
+        context.proxyContext.quoteToken.address
+      )
 
     const LPs_supplyBefore =
       await context.proxyContext.builtPoolResponse.pair.totalSupply()
@@ -207,12 +211,12 @@ async function main() {
       await context.proxyContext.builtPoolResponse.pair.getReserves()
 
     const price_before =
-      new Big(poolReserves_before[0].toString()).div(1e18).toNumber() /
-      new Big(poolReserves_before[1].toString()).div(1e18).toNumber()
+      new Big(poolReserves_before[1].toString()).div(1e18).toNumber() /
+      new Big(poolReserves_before[0].toString()).div(1e18).toNumber()
 
     const price_after =
-      new Big(poolReserves[0].toString()).div(1e18).toNumber() /
-      new Big(poolReserves[1].toString()).div(1e18).toNumber()
+      new Big(poolReserves[1].toString()).div(1e18).toNumber() /
+      new Big(poolReserves[0].toString()).div(1e18).toNumber()
 
     console.log({
       tag: "resultsAfter",

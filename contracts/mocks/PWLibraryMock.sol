@@ -18,4 +18,8 @@ contract PWLibraryMock {
   function computePRatio(uint n, uint p1, uint p2) external view returns (uint) {
     return PWLibrary.computePRatio(n, p1, p2);
   }
+
+  function findDirection(uint p1, uint p2) external view returns (PWLibrary.EAction) {
+    return PWLibrary.findDirection(p1, p2);
+  }
 }
