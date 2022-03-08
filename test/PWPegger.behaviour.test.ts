@@ -104,12 +104,12 @@ describe("PW Pegger behavioural tests", () => {
       // token: string
       token: proxyContext.baseToken.address,
       /*
-        uint emergencyth - 10% (0.1 * 10^6)
+        uint emergencyth - 50% (0.5 * 10^6)
         uint volatilityth - 3% (0.03 * 10^6)
         uint frontrunth - 2% (0.02 * 10^6);
       */
       // emergencyth: BigNumberish
-      emergencyth: new Big(0.1).mul(1e6).toFixed(),
+      emergencyth: new Big(0.5).mul(1e6).toFixed(),
       // volatilityth: BigNumberish
       volatilityth: new Big(0.03).mul(1e6).toFixed(),
       // frontrunth: BigNumberish
@@ -135,8 +135,8 @@ describe("PW Pegger behavioural tests", () => {
   })
 
   const priceToPWPegRepr = (price: number, dec = 6): string => {
-    const str = valueToDecimaled(price, dec)
-    return str.slice(0, str.indexOf("."))
+    // to use it as 6 default dec
+    return valueToDecimaled(price, dec);
   }
 
   const checkDiff = (a: number, b: number): number => {
@@ -150,40 +150,35 @@ describe("PW Pegger behavioural tests", () => {
       await ethers.getSigners()
 
     const innerContext = {
-      pwPegPrice: 2.15,
-      // pwPegPrices: [
-      //   2.15, 2.1, 2, 1.95, 1.6, 1.4, 1.7, 1.8, 2.04, 2.5, 2.9, 3.2,
-      // ],
+      pwPegPrice: 2.15, // 1.5 -> 2.15 (43% up)
+      p1PoolPrice: 1.5,
     }
-
     //
     // I. Imitate current pool price 1.5
     //
     context = await updateContext({
       overrideProxyCalibrateInput: {
-        liqA: new Big(100_000).mul(1e18).toFixed(),
-        liqB: new Big(150_000).mul(1e18).toFixed(),
+        liqA: new Big(100_000).mul(1e18).toFixed(), //A - G
+        liqB: new Big(100_000).mul(innerContext.p1PoolPrice).mul(1e18).toFixed(), //B - means U
       },
       overridePWPeggerConfig: {
-        emergencyth: new Big(0.1).mul(1e6).toFixed(),
+        emergencyth: new Big(0.5).mul(1e6).toFixed(), //50% th
         volatilityth: new Big(0.03).mul(1e6).toFixed(),
         frontrunth: new Big(0.02).mul(1e6).toFixed(),
       },
     })
-
-    // console.log({ mockPrice: priceToPWPegRepr(innerContext.pwPegPrice) })
     //
     // II. Push peg price to EAC
     //
     await context.pwpegdonRef
       .connect(pwpegdonRef_admin)
-      .mockUpdatePrice(priceToPWPegRepr(innerContext.pwPegPrice, 6 + 1))
+      .mockUpdatePrice(priceToPWPegRepr(innerContext.pwPegPrice))
 
     //
     // III. Call intervention from keeper
     //
 
-    // give approve from vault
+    // give approve from vault (approve all in that case)
     await context.proxyContext.builtPoolResponse.pair
       .connect(vault)
       .approve(
@@ -206,7 +201,7 @@ describe("PW Pegger behavioural tests", () => {
 
     await context.pwpegger
       .connect(keeper)
-      .callIntervention(priceToPWPegRepr(innerContext.pwPegPrice))
+      .callIntervention(priceToPWPegRepr(innerContext.p1PoolPrice)) //must be current pool price
 
     const LPs_supplyAfter =
       await context.proxyContext.builtPoolResponse.pair.totalSupply()
@@ -257,7 +252,7 @@ describe("PW Pegger behavioural tests", () => {
         liqB: new Big(210_000).mul(1e18).toFixed(),
       },
       overridePWPeggerConfig: {
-        emergencyth: new Big(0.1).mul(1e6).toFixed(),
+        emergencyth: new Big(0.5).mul(1e6).toFixed(),
         volatilityth: new Big(0.03).mul(1e6).toFixed(),
         frontrunth: new Big(0.02).mul(1e16).toFixed(),
       },
@@ -271,7 +266,7 @@ describe("PW Pegger behavioural tests", () => {
     for (const pwPegPrice of innerContext.pwPegPrices) {
       await context.pwpegdonRef
         .connect(pwpegdonRef_admin)
-        .mockUpdatePrice(priceToPWPegRepr(pwPegPrice, 6 + 1))
+        .mockUpdatePrice(priceToPWPegRepr(pwPegPrice))
 
       //
       // III. Call intervention from keeper
@@ -361,7 +356,7 @@ describe("PW Pegger behavioural tests", () => {
         liqB: new Big(150_000).mul(1e18).toFixed(),
       },
       overridePWPeggerConfig: {
-        emergencyth: new Big(0.1).mul(1e6).toFixed(),
+        emergencyth: new Big(0.5).mul(1e6).toFixed(),
         volatilityth: new Big(0.03).mul(1e6).toFixed(),
         frontrunth: new Big(0.02).mul(1e6).toFixed(),
       },
@@ -375,7 +370,7 @@ describe("PW Pegger behavioural tests", () => {
     for (const pwPegPrice of innerContext.pwPegPrices) {
       await context.pwpegdonRef
         .connect(pwpegdonRef_admin)
-        .mockUpdatePrice(priceToPWPegRepr(pwPegPrice, 6 + 1))
+        .mockUpdatePrice(priceToPWPegRepr(pwPegPrice))
 
       //
       // III. Call intervention from keeper
