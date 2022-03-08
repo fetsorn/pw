@@ -136,7 +136,7 @@ describe("PW Pegger behavioural tests", () => {
 
   const priceToPWPegRepr = (price: number, dec = 6): string => {
     // to use it as 6 default dec
-    return valueToDecimaled(price, dec);
+    return valueToDecimaled(price, dec)
   }
 
   const checkDiff = (a: number, b: number): number => {
@@ -159,7 +159,10 @@ describe("PW Pegger behavioural tests", () => {
     context = await updateContext({
       overrideProxyCalibrateInput: {
         liqA: new Big(100_000).mul(1e18).toFixed(), //A - G
-        liqB: new Big(100_000).mul(innerContext.p1PoolPrice).mul(1e18).toFixed(), //B - means U
+        liqB: new Big(100_000)
+          .mul(innerContext.p1PoolPrice)
+          .mul(1e18)
+          .toFixed(), //B - means U
       },
       overridePWPeggerConfig: {
         emergencyth: new Big(0.5).mul(1e6).toFixed(), //50% th
@@ -238,8 +241,8 @@ describe("PW Pegger behavioural tests", () => {
       await ethers.getSigners()
 
     const innerContext = {
-      pwPegPrice: 150, //
-      p1PoolPrice: 210,
+      pwPegPrice: 1.5, //
+      p1PoolPrice: 2.1,
     }
     //
     // I. Imitate current pool price 1.5
@@ -247,7 +250,10 @@ describe("PW Pegger behavioural tests", () => {
     context = await updateContext({
       overrideProxyCalibrateInput: {
         liqA: new Big(100_000).mul(1e18).toFixed(), //A - G
-        liqB: new Big(100_000).mul(innerContext.p1PoolPrice).mul(1e18).toFixed(), //B - means U
+        liqB: new Big(100_000)
+          .mul(innerContext.p1PoolPrice)
+          .mul(1e18)
+          .toFixed(), //B - means U
       },
       overridePWPeggerConfig: {
         emergencyth: new Big(0.5).mul(1e6).toFixed(), //50% th
@@ -296,6 +302,13 @@ describe("PW Pegger behavioural tests", () => {
 
     const poolReserves = await getPoolReserves()
 
+    const price_before =
+      new Big(poolReserves_before[1].toString()).div(1e18).toNumber() /
+      new Big(poolReserves_before[0].toString()).div(1e18).toNumber()
+    const price_after =
+      new Big(poolReserves[1].toString()).div(1e18).toNumber() /
+      new Big(poolReserves[0].toString()).div(1e18).toNumber()
+
     console.log({
       tag: "resultsAfter",
       r0_before: new Big(poolReserves_before[0].toString())
@@ -311,14 +324,128 @@ describe("PW Pegger behavioural tests", () => {
         .toNumber(),
       LPs_supplyAfter: new Big(LPs_supplyAfter.toString()).div(1e18).toNumber(),
 
-      price_before:
-        new Big(poolReserves_before[1].toString()).div(1e18).toNumber() /
-        new Big(poolReserves_before[0].toString()).div(1e18).toNumber(),
-
-      price_after:
-        new Big(poolReserves[1].toString()).div(1e18).toNumber() /
-        new Big(poolReserves[0].toString()).div(1e18).toNumber(),
+      price_before,
+      price_after,
+      pwpegprice_raw: innerContext.pwPegPrice,
+      pwpegprice_fmt: priceToPWPegRepr(innerContext.pwPegPrice),
+      price_diff_with_peg: innerContext.pwPegPrice / price_after,
     })
   })
 
+  it("behaviour test with PW Pegger - one price down", async () => {
+    const [deployer, keeper, pwpegdonRef_admin, vault] =
+      await ethers.getSigners()
+
+    const innerContext = {
+      pwPegPrice: 1.5, //
+      p1PoolPrice: 2.1,
+    }
+    //
+    // I. Imitate current pool price 1.5
+    //
+    context = await updateContext({
+      overrideProxyCalibrateInput: {
+        liqA: new Big(100_000).mul(1e18).toFixed(), //A - G
+        liqB: new Big(100_000)
+          .mul(innerContext.p1PoolPrice)
+          .mul(1e18)
+          .toFixed(), //B - means U
+      },
+      overridePWPeggerConfig: {
+        emergencyth: new Big(0.5).mul(1e6).toFixed(), //50% th
+        volatilityth: new Big(0.03).mul(1e6).toFixed(),
+        frontrunth: new Big(0.02).mul(1e6).toFixed(),
+      },
+    })
+    //
+    // II. Push peg price to EAC
+    //
+    await context.pwpegdonRef
+      .connect(pwpegdonRef_admin)
+      .mockUpdatePrice(priceToPWPegRepr(innerContext.pwPegPrice))
+
+    //
+    // III. Call intervention from keeper
+    //
+
+    // give approve from vault (approve all in that case)
+    await context.proxyContext.builtPoolResponse.pair
+      .connect(vault)
+      .approve(
+        context.pwpegger.address,
+        await context.proxyContext.builtPoolResponse.pair.balanceOf(
+          vault.address
+        )
+      )
+
+    const getPoolReserves = async () =>
+      await context.proxyContext.calibrator.getReserves(
+        context.proxyContext.builtPoolResponse.pair.address,
+        context.proxyContext.baseToken.address,
+        context.proxyContext.quoteToken.address
+      )
+    const poolReserves_before = await getPoolReserves()
+
+    const vault_balance_before =
+      await context.proxyContext.builtPoolResponse.pair.balanceOf(
+        context.pwpeggerConfig.vault
+      )
+
+    const LPs_supplyBefore =
+      await context.proxyContext.builtPoolResponse.pair.totalSupply()
+
+    await context.pwpegger
+      .connect(keeper)
+      .callIntervention(priceToPWPegRepr(innerContext.p1PoolPrice)) //must be current pool price
+
+    const vault_balance_after =
+      await context.proxyContext.builtPoolResponse.pair.balanceOf(
+        context.pwpeggerConfig.vault
+      )
+
+    const LPs_supplyAfter =
+      await context.proxyContext.builtPoolResponse.pair.totalSupply()
+
+    const poolReserves = await getPoolReserves()
+
+    const price_before =
+      new Big(poolReserves_before[1].toString()).div(1e18).toNumber() /
+      new Big(poolReserves_before[0].toString()).div(1e18).toNumber()
+    const price_after =
+      new Big(poolReserves[1].toString()).div(1e18).toNumber() /
+      new Big(poolReserves[0].toString()).div(1e18).toNumber()
+
+    console.log({
+      tag: "resultsAfter",
+      r0_before: new Big(poolReserves_before[0].toString())
+        .div(1e18)
+        .toNumber(),
+      r1_before: new Big(poolReserves_before[1].toString())
+        .div(1e18)
+        .toNumber(),
+      r0_after: new Big(poolReserves[0].toString()).div(1e18).toNumber(),
+      r1_after: new Big(poolReserves[1].toString()).div(1e18).toNumber(),
+      LPs_supplyBefore: new Big(LPs_supplyBefore.toString())
+        .div(1e18)
+        .toNumber(),
+      LPs_supplyAfter: new Big(LPs_supplyAfter.toString()).div(1e18).toNumber(),
+
+      price_before,
+      price_after,
+      pwpegprice_raw: innerContext.pwPegPrice,
+      pwpegprice_fmt: priceToPWPegRepr(innerContext.pwPegPrice),
+      price_diff_with_peg: innerContext.pwPegPrice / price_after,
+
+      vault_balance_before_f: vault_balance_before.toString(),
+      vault_balance_before: vault_balance_before.toString(),
+      vault_balance_after: vault_balance_after.toString(),
+      vault_balance_diff: vault_balance_after
+        .sub(vault_balance_before)
+        .toString(),
+      vault_balance_diff_fmt: vault_balance_after
+        .sub(vault_balance_before)
+        .div(new Big(1e18).toFixed())
+        .toString(),
+    })
+  })
 })

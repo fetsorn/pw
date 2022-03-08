@@ -7,37 +7,37 @@ import { PWPegger__factory } from "~/typechain/factories/PWPegger__factory"
 async function main() {
   const [keeperOracle, adminOracle] = await ethers.getSigners()
 
-  const response = {
-    config: {
-      admin: "0xEab9ff1625eD15E88fb2bCdbb4f325AA4742972d",
-      keeper: "0x548A2b214493290bB45D516f16176Be01dbf1674",
-      pwpegdonRef: "0x828761B78E22f5A24240d3EFBA04D1f0b25f4EFE",
-      calibrator: "0xF3ca94706164ca970B649CE72F7e424ad18cd850",
-      vault: "0x3718eCd4E97f4332F9652D0Ba224f228B55ec543",
-      pool: "0xcf9f857ffe6ff32b41b2a0d0b4448c16564886de",
-      token: "0xc1be9a4d5d45beeacae296a7bd5fadbfc14602c4",
-      // emergencyth: "100000",
-      // volatilityth: "30000",
-      // frontrunth: "20000",
-      emergencyth: "100000000000000000",
-      volatilityth: "100000000000000000",
-      frontrunth: "100000000000000000",
-      decimals: 6,
-    },
-    pwpegger: "0xadAf77ED6f310A848dA2542E57Fe26049A30B96c",
-  }
+  // const response = {
+  //   config: {
+  //     admin: "0xEab9ff1625eD15E88fb2bCdbb4f325AA4742972d",
+  //     keeper: "0x548A2b214493290bB45D516f16176Be01dbf1674",
+  //     pwpegdonRef: "0x828761B78E22f5A24240d3EFBA04D1f0b25f4EFE",
+  //     calibrator: "0xF3ca94706164ca970B649CE72F7e424ad18cd850",
+  //     vault: "0x3718eCd4E97f4332F9652D0Ba224f228B55ec543",
+  //     pool: "0xcf9f857ffe6ff32b41b2a0d0b4448c16564886de",
+  //     token: "0xc1be9a4d5d45beeacae296a7bd5fadbfc14602c4",
+  //     // emergencyth: "100000",
+  //     // volatilityth: "30000",
+  //     // frontrunth: "20000",
+  //     emergencyth: "100000000000000000",
+  //     volatilityth: "100000000000000000",
+  //     frontrunth: "100000000000000000",
+  //     decimals: 6,
+  //   },
+  //   pwpegger: "0xadAf77ED6f310A848dA2542E57Fe26049A30B96c",
+  // }
 
   const pwfactory = (await ethers.getContractFactory(
     "PWPegger"
   )) as PWPegger__factory
 
-  let pwpegger = pwfactory.attach(response.pwpegger)
+  let pwpegger = pwfactory.attach("0x5b57373400B0045c856300F9626d7038f8830195")
 
   // pwpegger.callIntervention()
-  await pwpegger.connect(adminOracle).updPWConfig(response.config)
+  // await pwpegger.connect(adminOracle).updPWConfig(response.config)
 
   // return
-  pwpegger = pwpegger.connect(keeperOracle)
+  pwpegger = await pwpegger.connect(keeperOracle)
 
   const basePrice = await axios.get<{ result: number }>("/rpc/base-price", {
     baseURL: "https://pw.gton.capital",
@@ -48,10 +48,12 @@ async function main() {
   let currentPriceArg = new Big(basePrice.data.result).mul(1e6).toFixed()
   currentPriceArg = currentPriceArg.slice(0, currentPriceArg.indexOf("."))
 
-  const intervention_result = await pwpegger.callIntervention(currentPriceArg, {
-    gasLimit: 2_000_000,
-    gasPrice: new Big(900).mul(1e9).toFixed(),
-  })
+  const intervention_result = await pwpegger.callIntervention(currentPriceArg)
+
+  // const intervention_result = await pwpegger.callIntervention(currentPriceArg, {
+  //   gasLimit: 2_000_000,
+  //   gasPrice: new Big(1500).mul(1e9).toFixed(),
+  // })
   console.log({ intervention_result: intervention_result.hash })
 }
 
