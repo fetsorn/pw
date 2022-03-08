@@ -2,6 +2,8 @@ import Big from "big.js"
 import axios from "axios"
 import { ethers } from "hardhat"
 
+const TGBot = require("node-telegram-bot-api")
+
 import { PWPegger__factory } from "~/typechain/factories/PWPegger__factory"
 
 async function main() {
@@ -27,6 +29,13 @@ async function main() {
   //   pwpegger: "0xadAf77ED6f310A848dA2542E57Fe26049A30B96c",
   // }
 
+  // replace the value below with the Telegram token you receive from @BotFather
+  const token = process.env.TG_TOKEN
+  const channel_id = process.env.TG_CHANNEL
+
+  // Create a bot that uses 'polling' to fetch new updates
+  const bot = new TGBot(token, { polling: false })
+
   const pwfactory = (await ethers.getContractFactory(
     "PWPegger"
   )) as PWPegger__factory
@@ -39,22 +48,53 @@ async function main() {
   // return
   pwpegger = await pwpegger.connect(keeperOracle)
 
-  const basePrice = await axios.get<{ result: number }>("/rpc/base-price", {
-    baseURL: "https://pw.gton.capital",
-  })
+  const sleep = async (ms: number) =>
+    await new Promise((resolve) => setTimeout(resolve, ms))
 
-  console.log({ basePrice: basePrice.data.result })
+  while (true) {
+    try {
+      const basePrice = await axios.get<{ result: number }>("/rpc/base-price", {
+        baseURL: "https://pw.gton.capital",
+      })
 
-  let currentPriceArg = new Big(basePrice.data.result).mul(1e6).toFixed()
-  currentPriceArg = currentPriceArg.slice(0, currentPriceArg.indexOf("."))
+      console.log({ basePrice: basePrice.data.result })
 
-  const intervention_result = await pwpegger.callIntervention(currentPriceArg)
+      let currentPriceArg = new Big(basePrice.data.result).mul(1e6).toFixed()
+      currentPriceArg = currentPriceArg.slice(0, currentPriceArg.indexOf("."))
 
-  // const intervention_result = await pwpegger.callIntervention(currentPriceArg, {
-  //   gasLimit: 2_000_000,
-  //   gasPrice: new Big(1500).mul(1e9).toFixed(),
-  // })
-  console.log({ intervention_result: intervention_result.hash })
+      const estimated_callIntervention =
+        await pwpegger.estimateGas.callIntervention(currentPriceArg)
+      console.log({ estimated_callIntervention })
+
+      const intervention_result = await pwpegger.callIntervention(
+        currentPriceArg
+      )
+
+      // console.log({ intervention_result: intervention_result.hash })
+
+      const tx_msg = `https://ftmscan.com/tx/${intervention_result.hash}`
+
+      await bot.sendMessage(
+        channel_id,
+        `callIntervention successfully called\n${tx_msg}`
+      )
+    } catch (err) {
+      const casted_err = err as { error: string }
+      const spl = String(casted_err.error).split("\n")
+      const formatted_message = spl[0]
+
+      await bot.sendMessage(channel_id, formatted_message)
+
+      // console.log({ spl })
+      // const formatted_message = casted_err
+      // console.log({
+      //   err,
+      //   real_error: casted_err.error,
+      // })
+    }
+
+    await sleep(1000 * 60 * 5)
+  }
 }
 
 main()
