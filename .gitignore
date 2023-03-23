@@ -1,4 +1,6 @@
 node_modules
+.idea/
+.nuxt/
 .DS_Store
 .env
 coverage

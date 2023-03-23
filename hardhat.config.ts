@@ -30,11 +30,11 @@ export default {
       accounts: [PRIVATE_KEY],
     },
     gton: {
-      url: "https://testnet.gton.network",
+      url: "https://rpc.gton.network",
       accounts: [PRIVATE_KEY],
     },
     gtonTestnet: {
-      url: "https://rpc.gton.network",
+      url: "https://testnet.gton.network",
       accounts: [PRIVATE_KEY],
     },
   },
