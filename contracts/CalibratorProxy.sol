@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title Proxy contract for interaction with Calibrator contract
 /// @notice Just simplifies calculations
-/// @author Shamil Khalilov - <shamfama@gmail.com>
+
 contract CalibratorProxy is Ownable {
   ICalibrator private calibrator;
   IERC20 private base;
@@ -19,7 +19,7 @@ contract CalibratorProxy is Ownable {
   constructor(
     ICalibrator _calibrator,
     IERC20 _base
-  ) public {
+  ) {
     calibrator = _calibrator;
     base = _base;
   }

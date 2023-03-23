@@ -10,7 +10,7 @@ import "hardhat/console.sol";
 contract Calibrator is ICalibrator {
     address public owner;
     IERC20 public base;
-    IUniswapV2Router01 public router;
+    IUniswapV2Router02 public router;
     string public dex;
 
     struct Pool {
@@ -28,7 +28,7 @@ contract Calibrator is ICalibrator {
 
     constructor(
         IERC20 _base,
-        IUniswapV2Router01 _router,
+        IUniswapV2Router02 _router,
         string memory _dex
     ) {
         owner = msg.sender;
@@ -103,7 +103,7 @@ contract Calibrator is ICalibrator {
         IERC20 token = tokenFromPool(pool);
         remove(pool, token, liquidity);
         // buy base for `amountBuy`
-        buy(pool, token, amountBuy);
+        buy(token, amountBuy);
         // add liquidity for all quote token and have some base left
         add(pool, token);
         // send base and lp to `to`
@@ -118,7 +118,7 @@ contract Calibrator is ICalibrator {
     ) override public {
         IERC20 token = tokenFromPool(pool);
         remove(pool, token, liquidity);
-        sell(pool, token, amountSell);
+        sell(token, amountSell);
         add(pool, token);
         retrieve(pool, to, token);
     }
@@ -135,7 +135,7 @@ contract Calibrator is ICalibrator {
         // console.log("amountBuy: %s", amountBuy);
         // console.log("balance before - b: %s, q: %s", base.balanceOf(address(this)), token.balanceOf(address(this)));
         // buy base for `amountBuy`
-        buy(pool, token, amountBuy);
+        buy(token, amountBuy);
         // console.log("balance after - b: %s, q: %s", base.balanceOf(address(this)), token.balanceOf(address(this)));
         // add liquidity for all quote token and have some base left
         add(pool, token);
@@ -153,7 +153,7 @@ contract Calibrator is ICalibrator {
         IERC20 token = tokenFromPool(pool);
         remove(pool, token, liquidity);
         // buy base for `amountBuy`
-        buy(pool, token, amountBuy);
+        buy(token, amountBuy);
         // send base and lp to `to`
         retrieve(pool, to, token);
     }
@@ -204,7 +204,6 @@ contract Calibrator is ICalibrator {
     }
 
     function sell(
-        IUniswapV2Pair pool,
         IERC20 token,
         uint256 amountSell
     ) public {
@@ -226,7 +225,6 @@ contract Calibrator is ICalibrator {
     }
 
     function buy(
-        IUniswapV2Pair pool,
         IERC20 token,
         uint256 amountBuy
     ) public {
