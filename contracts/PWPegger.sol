@@ -10,12 +10,12 @@ import "./interfaces/IUniswapV2Pair.sol";
 import "./libraries/PWLibrary.sol";
 import "./libraries/PWConfig.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 
 struct PoolData {
-    uint g;
-    uint u; 
+    uint g; // Quote token
+    uint u; // Base token - OGXT
     uint p1; 
     uint lp;
 }
@@ -26,13 +26,13 @@ contract PWPegger is IPWPegger {
     uint round;
 
     modifier onlyAdmin() {
-        require(msg.sender == pwconfig.admin, "Error: must be admin EOA or multisig only");
+        require(msg.sender == pwconfig.admin, "Error: not admin");
         _;
     }
 
     modifier onlyKeeper() {
         require(msg.sender == pwconfig.admin || msg.sender == pwconfig.keeper, 
-            "Error: must be admin or keeper EOA/multisig only");
+            "Error: not admin or keeper");
         _;
     }
 
@@ -195,14 +195,14 @@ contract PWPegger is IPWPegger {
         // Step-I: what to do - up or down
         PWLibrary.EAction act = PWLibrary.findDirection(poolData.p1, pPrice); //p1 - prev price, pPrice - peg price
 
-        console.log("computing PWLibrary.computeXLPForDirection");
-        console.log("poolData.g %s", poolData.g);
-        console.log("poolData.u %s", poolData.u);
-        console.log("poolData.p1 %s", poolData.p1);
-        console.log("pPrice %s", pPrice);
-        console.log("isUp?: %s", pPrice > poolData.p1);
-        console.log("poolData.lp, %s", poolData.lp);
-        console.log("pwconfig.decimals, %s", pwconfig.decimals);
+        // console.log("computing PWLibrary.computeXLPForDirection");
+        // console.log("poolData.g %s", poolData.g);
+        // console.log("poolData.u %s", poolData.u);
+        // console.log("poolData.p1 %s", poolData.p1);
+        // console.log("pPrice %s", pPrice);
+        // console.log("isUp?: %s", pPrice > poolData.p1);
+        // console.log("poolData.lp, %s", poolData.lp);
+        // console.log("pwconfig.decimals, %s", pwconfig.decimals);
 
         // Step-II: how many LPs
         uint xLPs = PWLibrary.computeXLPForDirection(
@@ -215,8 +215,8 @@ contract PWPegger is IPWPegger {
             pwconfig.decimals
         );
 
-        console.log("xLPs, %s", xLPs);
-        console.log("pwconfig.vault, %s", pwconfig.vault);
+        // console.log("xLPs, %s", xLPs);
+        // console.log("pwconfig.vault, %s", pwconfig.vault);
 
         // Step-II: execute:
         pool.transferFrom(pwconfig.vault, address(this), xLPs);

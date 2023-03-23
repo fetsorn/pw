@@ -8,6 +8,7 @@ import "hardhat/console.sol";
 
 /// @title Calibrator
 contract Calibrator is ICalibrator {
+
     address public owner;
     IERC20 public base;
     IUniswapV2Router02 public router;
@@ -34,18 +35,6 @@ contract Calibrator is ICalibrator {
         owner = msg.sender;
         base = _base;
         router = _router;
-        require(
-            (equal(_dex, "MDEX")) ||
-                (equal(_dex, "QUICK")) ||
-                (equal(_dex, "SPIRIT")) ||
-                (equal(_dex, "SPOOKY")) ||
-                (equal(_dex, "SUSHI")) ||
-                (equal(_dex, "PANGOLIN")) ||
-                (equal(_dex, "HONEY")) ||
-                (equal(_dex, "SUSHI")) ||
-                (equal(_dex, "CAKE")),
-            "dex unknown"
-        );
         dex = _dex;
     }
 
@@ -442,7 +431,7 @@ contract Calibrator is ICalibrator {
 
     function estimateRemove(Pool memory pBefore, uint256 liquidityRemove)
         public
-        view
+        pure
         returns (Pool memory pAfter, Wallet memory wAfter)
     {
         pAfter = pBefore;
@@ -474,7 +463,7 @@ contract Calibrator is ICalibrator {
         uint256 amountBaseBuy
     )
         public
-        view
+        pure
         returns (
             Pool memory pAfter,
             Wallet memory wAfter,
@@ -500,7 +489,7 @@ contract Calibrator is ICalibrator {
 
     function estimateAdd(Pool memory pBefore, Wallet memory wBefore)
         public
-        view
+        pure
         returns (Pool memory pAfter, Wallet memory wAfter)
     {
         pAfter = pBefore;
@@ -757,7 +746,7 @@ contract Calibrator is ICalibrator {
     )
         override
         public
-        view
+        pure
         returns (
             uint256 reserveBaseAfter,
             uint256 reserveQuoteAfter,
@@ -792,7 +781,7 @@ contract Calibrator is ICalibrator {
     )
         override
         public
-        view
+        pure
         returns (
             uint256 reserveBaseAfter,
             uint256 reserveQuoteAfter,
@@ -816,7 +805,7 @@ contract Calibrator is ICalibrator {
     )
         override
         public
-        view
+        pure
         returns (
             uint256 reserveBaseAfter,
             uint256 reserveQuoteAfter,
@@ -840,7 +829,7 @@ contract Calibrator is ICalibrator {
         uint256 amountQuoteAdd
     )
         public
-        view
+        pure
         returns (
             uint256 reserveBaseAfter,
             uint256 reserveQuoteAfter,
@@ -965,25 +954,15 @@ contract Calibrator is ICalibrator {
         uint256 amountIn,
         uint256 reserveIn,
         uint256 reserveOut
-    ) override public view returns (uint256 amountOut) {
+    ) override public pure returns (uint256 amountOut) {
         // require(amountIn > 0, 'UniswapV2Library: INSUFFICIENT_INPUT_AMOUNT');
         // require(reserveIn > 0 && reserveOut > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');
-        if (equal(dex, "CAKE")) {
-            uint256 amountInWithFee = amountIn * 9975;
-            uint256 numerator = amountInWithFee * reserveOut;
-            uint256 denominator = (reserveIn * 10000) + amountInWithFee;
-            amountOut = numerator / denominator;
-        } else if (equal(dex, "SPOOKY")) {
-            uint256 amountInWithFee = amountIn * 998;
-            uint256 numerator = amountInWithFee * reserveOut;
-            uint256 denominator = (reserveIn * 1000) + amountInWithFee;
-            amountOut = numerator / denominator;
-        } else {
-            uint256 amountInWithFee = amountIn * 997;
-            uint256 numerator = amountInWithFee * reserveOut;
-            uint256 denominator = (reserveIn * 1000) + amountInWithFee;
-            amountOut = numerator / denominator;
-        }
+
+        // Default Uniswap V2 params, might need changing if DEX has different fees
+        uint256 amountInWithFee = amountIn * 997;
+        uint256 numerator = amountInWithFee * reserveOut;
+        uint256 denominator = (reserveIn * 1000) + amountInWithFee;
+        amountOut = numerator / denominator;
     }
 
     // given an output amount of an asset and pair reserves, returns a required input amount of the other asset
@@ -991,22 +970,14 @@ contract Calibrator is ICalibrator {
         uint256 amountOut,
         uint256 reserveIn,
         uint256 reserveOut
-    ) public view returns (uint256 amountIn) {
+    ) public pure returns (uint256 amountIn) {
         // require(amountOut > 0, 'UniswapV2Library: INSUFFICIENT_OUTPUT_AMOUNT');
         // require(reserveIn > 0 && reserveOut > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');
-        if (equal(dex, "CAKE")) {
-            uint256 numerator = reserveIn * amountOut * 10000;
-            uint256 denominator = (reserveOut - amountOut) * 9975;
-            amountIn = (numerator / denominator) + 1;
-        } else if (equal(dex, "SPOOKY")) {
-            uint256 numerator = reserveIn * amountOut * 1000;
-            uint256 denominator = (reserveOut - amountOut) * 998;
-            amountIn = (numerator / denominator) + 1;
-        } else {
-            uint256 numerator = reserveIn * amountOut * 1000;
-            uint256 denominator = (reserveOut - amountOut) * 997;
-            amountIn = (numerator / denominator) + 1;
-        }
+
+        // Default Uniswap V2 params, might need changing if DEX has different fees
+        uint256 numerator = reserveIn * amountOut * 1000;
+        uint256 denominator = (reserveOut - amountOut) * 997;
+        amountIn = (numerator / denominator) + 1;
     }
 
     function mintFee(
@@ -1014,57 +985,18 @@ contract Calibrator is ICalibrator {
         uint256 reserve1,
         uint256 totalSupply,
         uint256 kLast
-    ) internal view returns (uint256 totalSupplyNew) {
-        if (equal(dex, "MDEX")) {
-            if (kLast != 0) {
-                uint256 rootK = sqrt(reserve0 * reserve1);
-                uint256 rootKLast = sqrt(kLast);
-                if (rootK > rootKLast) {
-                    uint256 numerator = totalSupply * (rootK - rootKLast);
-                    uint256 denominator = rootKLast;
-                    uint256 liquidityFee = numerator / denominator;
-                    if (liquidityFee > 0) {
-                        totalSupply += liquidityFee;
-                    }
-                }
-            }
-        } else if (equal(dex, "CAKE")) {
-            if (kLast != 0) {
-                uint256 rootK = sqrt(reserve0 * reserve1);
-                uint256 rootKLast = sqrt(kLast);
-                if (rootK > rootKLast) {
-                    uint256 numerator = totalSupply * (rootK - rootKLast);
-                    uint256 denominator = (rootK * 17) + rootKLast;
-                    uint256 liquidityFee = numerator / denominator;
-                    if (liquidityFee > 0) {
-                        totalSupply += liquidityFee;
-                    }
-                }
-            }
-        } else if (equal(dex, "SPOOKY")) {
-            if (kLast != 0) {
-                uint256 rootK = sqrt(reserve0 * reserve1);
-                uint256 rootKLast = sqrt(kLast);
-                if (rootK > rootKLast) {
-                    uint256 numerator = totalSupply * (rootK - rootKLast);
-                    uint256 denominator = (rootK * 3) + rootKLast;
-                    uint256 liquidityFee = numerator / denominator;
-                    if (liquidityFee > 0) {
-                        totalSupply += liquidityFee;
-                    }
-                }
-            }
-        } else {
-            if (kLast != 0) {
-                uint256 rootK = sqrt(reserve0 * reserve1);
-                uint256 rootKLast = sqrt(kLast);
-                if (rootK > rootKLast) {
-                    uint256 numerator = totalSupply * (rootK - rootKLast);
-                    uint256 denominator = (rootK * 5) + rootKLast;
-                    uint256 liquidityFee = numerator / denominator;
-                    if (liquidityFee > 0) {
-                        totalSupply += liquidityFee;
-                    }
+    ) internal pure returns (uint256 totalSupplyNew) {
+        
+        // Default Uniswap V2 params, might need changing if DEX has different fees
+        if (kLast != 0) {
+            uint256 rootK = sqrt(reserve0 * reserve1);
+            uint256 rootKLast = sqrt(kLast);
+            if (rootK > rootKLast) {
+                uint256 numerator = totalSupply * (rootK - rootKLast);
+                uint256 denominator = (rootK * 5) + rootKLast;
+                uint256 liquidityFee = numerator / denominator;
+                if (liquidityFee > 0) {
+                    totalSupply += liquidityFee;
                 }
             }
         }
