@@ -42,6 +42,7 @@
     "build": "nuxt build",
     "start": "nuxt start",
     "generate": "nuxt generate",
+    "deploy:pw:testnet": "hardhat run --network gtonTestnet ./scripts/deploy-pw.ts",
     "test:pw": "hardhat test ./test/PWPegger.behaviour.test.ts",
     "test:pw:testnet": "hardhat run --network ftmtestnet ./scripts/deploy-test-pw.ts"
   },

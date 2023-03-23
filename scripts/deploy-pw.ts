@@ -34,25 +34,30 @@ async function mn() {
     "CalibratorProxy"
   )) as CalibratorProxy__factory
 
-  // const pworacle = "0x548A2b214493290bB45D516f16176Be01dbf1674"
-  // const shamil = "0x3718eCd4E97f4332F9652D0Ba224f228B55ec543"
-  const tslaKeeperTestnet = ""
-
-  // const spirit_pool_gton_wftm = "0x25f5b3840d414a21c4fc46d21699e54d48f75fdd"
+  const ogxtGTON = "0x7c6b91D9Be155A6Db01f749217d76fF02A7227F2"
+  const simTSLAtestnet = "0xBca5De3E6Ea3B39770C0a6EF3793e8fA6424031e"
+  const tslaKeeperTestnet = "0x442cD59CaeAa047d58F76057164Cd645E1ecF85f" // Admin wallet that sets prices 
   const simTSLA_pool_gton = "0x45581064DE5264f458C59bbF861BA01142cC5b0b"
+  const ogxRouter02testnet = "0xf4503ca35E2a9b781f8a7615Ab1FE67fF6BC4396"
+  const simTSLAHolderTestnet = "0xf7a643F3Dfc4b49a06e30AfA349ae13873FF86BD"
 
-  const simTSLA = "0xBca5De3E6Ea3B39770C0a6EF3793e8fA6424031e"
+  const quoteAsset = simTSLAtestnet
+  const baseAsset = ogxtGTON
+  const router = ogxRouter02testnet
+  const admin = tslaKeeperTestnet
+  const keeper = tslaKeeperTestnet
+  const currentLPHolder = simTSLAHolderTestnet
 
   // const calibratorProxy = "0xF3ca94706164ca970B649CE72F7e424ad18cd850"
   const calibrator = await calibratorFactory.deploy(
-    simTSLA, // quote
-    "0x16327e3fbdaca3bcf7e38f5af2599d2ddc33ae52", // SPIRIT SWAP
+    baseAsset, // base
+    router, // router
     "OGX"
   )
 
   const calibratorProxy = await calibratorProxyFactory.deploy(
     calibrator.address,
-    simTSLA // GTON
+    baseAsset // base
   )
 
   console.log({
@@ -64,17 +69,17 @@ async function mn() {
 
   const config: PWPeggerConfig = {
     // admin: string
-    admin: "0xEab9ff1625eD15E88fb2bCdbb4f325AA4742972d",
+    admin: admin,
     // keeper: string
-    keeper: tslaKeeperTestnet,
+    keeper: keeper,
     // calibrator: string
     calibrator: calibratorProxy.address,
     // vault: string
-    vault: "0xB3D22267E7260ec6c3931d50D215ABa5Fd54506a",
+    vault: currentLPHolder,
     // pool: string
     pool: simTSLA_pool_gton,
     // token: string
-    token: "0xc1be9a4d5d45beeacae296a7bd5fadbfc14602c4",
+    token: quoteAsset,
     /*
       uint emergencyth - 10% (0.1 * 10^6)
       uint volatilityth - 3% (0.03 * 10^6)
