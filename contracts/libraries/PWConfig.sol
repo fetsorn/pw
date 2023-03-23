@@ -4,7 +4,6 @@ pragma solidity >=0.8.0;
 struct PWConfig { 
     address admin;
     address keeper;
-    address pwpegdonRef;
     address calibrator;
     address vault;
     address pool;

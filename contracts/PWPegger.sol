@@ -21,6 +21,7 @@ struct PoolData {
 }
 
 contract PWPegger is IPWPegger {
+
     PWConfig private pwconfig;
     bool statusPause;
     uint round;
@@ -67,10 +68,6 @@ contract PWPegger is IPWPegger {
 
     function updKeeper(address _newKeeper) external override onlyAdmin() {
         pwconfig.keeper = _newKeeper;
-    }
-
-    function updPathwayDONRef(address _newPwpegdonRef) external override onlyAdmin() {
-        pwconfig.pwpegdonRef = _newPwpegdonRef;
     }
 
     function updCalibratorProxyRef(address _newCalibrator) external override onlyAdmin() {
@@ -123,6 +120,8 @@ contract PWPegger is IPWPegger {
             "Th Volatility Error: price diff exceeds volatility threshold");
     }
 
+    // Unused for now but might add the price check given current liquidity in the pool - 
+    // for this we'd need additional parameter in callIntervention call
     function _checkThFrontrunOrRaiseException(uint _currPrice, uint _keeperPrice) view internal {
         // _currPrice and _keeperPrice must be same decimals
         uint n = 10**pwconfig.decimals;
@@ -132,23 +131,6 @@ contract PWPegger is IPWPegger {
             "Th FrontRun Error: current price is much higher than keeperPrice");
         require(priceDiff < pwconfig.emergencyth, 
             "Th Emergency Error: current price is much higher than keeperPrice");
-    }
-
-    // those functions are reading and convert data to the correct decimals for price data
-    function _readDONPrice(address _refDON) view internal returns (uint) {
-        IEACAggregatorProxy priceFeed = IEACAggregatorProxy(_refDON);
-        (            
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        ) = priceFeed.latestRoundData();
-        uint decimals = priceFeed.decimals();
-        require(decimals >= 0 && answer > 0, 'DON Error: price data and decimals must be higher than 0');
-        uint n = 10**pwconfig.decimals;
-        uint d = 10**decimals;
-        return (uint(answer)*n/d);
     }
 
     function _preparePWData(IUniswapV2Pair _pool, address _tokenGRef) view internal returns (PoolData memory) {
@@ -177,23 +159,21 @@ contract PWPegger is IPWPegger {
         );
     }
 
-    function callIntervention(uint _keeperCurrentPrice) external override onlyKeeper() onlyNotPaused() {
-        require(_keeperCurrentPrice > 0, 'Call Error: _keeperCurrentPrice must be higher than 0');
+    function callIntervention(uint newQuotePrice) external override onlyKeeper() onlyNotPaused() {
+        require(newQuotePrice > 0, 'Call Error: newQuotePrice must be higher than 0');
 
         IUniswapV2Pair pool = IUniswapV2Pair(pwconfig.pool);
-        uint pPrice = _readDONPrice(pwconfig.pwpegdonRef);
 
         PoolData memory poolData = _preparePWData(pool, pwconfig.token);
 
-        _checkThConditionsOrRaiseException(poolData.p1, pPrice);
-        _checkThFrontrunOrRaiseException(poolData.p1, _keeperCurrentPrice);
+        _checkThConditionsOrRaiseException(poolData.p1, newQuotePrice);
 
-        if (pPrice == poolData.p1) {
+        if (newQuotePrice == poolData.p1) {
             revert("no price diff");
         }
 
         // Step-I: what to do - up or down
-        PWLibrary.EAction act = PWLibrary.findDirection(poolData.p1, pPrice); //p1 - prev price, pPrice - peg price
+        PWLibrary.EAction act = PWLibrary.findDirection(poolData.p1, newQuotePrice); //p1 - prev price, pPrice - peg price
 
         // console.log("computing PWLibrary.computeXLPForDirection");
         // console.log("poolData.g %s", poolData.g);
@@ -209,7 +189,7 @@ contract PWPegger is IPWPegger {
             poolData.g, 
             poolData.u, 
             poolData.p1, 
-            pPrice,
+            newQuotePrice,
             act, 
             poolData.lp,
             pwconfig.decimals

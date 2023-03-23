@@ -26,7 +26,6 @@ describe("PW Pegger behavioural tests", () => {
   type Context = {
     pwpegger: PWPegger
     pwpeggerConfig: PWPeggerConfig
-    pwpegdonRef: EACAggregatorProxyMock
     proxyContext: {
       calibratorProxy: CalibratorProxy
       calibrator: Calibrator
@@ -84,17 +83,11 @@ describe("PW Pegger behavioural tests", () => {
       ...overrideProxyCalibrateInput,
     })
 
-    const pwpegdonRef = await eacAggrProxyFactory
-      .connect(pwpegdonRef_admin)
-      .deploy(pwpegdonRef_admin.address, 6)
-
     const config: PWPeggerConfig = {
       // admin: string
       admin: deployer.address,
       // keeper: string
       keeper: keeper.address,
-      // pwpegdonRef: string
-      pwpegdonRef: pwpegdonRef.address,
       // calibrator: string
       calibrator: proxyContext.calibratorProxy.address,
       // vault: string
@@ -126,7 +119,6 @@ describe("PW Pegger behavioural tests", () => {
       pwpegger,
       pwpeggerConfig: config,
       proxyContext,
-      pwpegdonRef,
     }
   }
 
@@ -170,15 +162,9 @@ describe("PW Pegger behavioural tests", () => {
         frontrunth: new Big(0.02).mul(1e6).toFixed(),
       },
     })
-    //
-    // II. Push peg price to EAC
-    //
-    await context.pwpegdonRef
-      .connect(pwpegdonRef_admin)
-      .mockUpdatePrice(priceToPWPegRepr(innerContext.pwPegPrice))
 
     //
-    // III. Call intervention from keeper
+    // II. Call intervention from keeper
     //
 
     // give approve from vault (approve all in that case)
@@ -204,7 +190,7 @@ describe("PW Pegger behavioural tests", () => {
 
     await context.pwpegger
       .connect(keeper)
-      .callIntervention(priceToPWPegRepr(innerContext.p1PoolPrice)) //must be current pool price
+      .callIntervention(priceToPWPegRepr(innerContext.pwPegPrice)) // new price we want to set
 
     const LPs_supplyAfter =
       await context.proxyContext.builtPoolResponse.pair.totalSupply()
@@ -261,15 +247,9 @@ describe("PW Pegger behavioural tests", () => {
         frontrunth: new Big(0.02).mul(1e6).toFixed(),
       },
     })
-    //
-    // II. Push peg price to EAC
-    //
-    await context.pwpegdonRef
-      .connect(pwpegdonRef_admin)
-      .mockUpdatePrice(priceToPWPegRepr(innerContext.pwPegPrice))
 
     //
-    // III. Call intervention from keeper
+    // II. Call intervention from keeper
     //
 
     // give approve from vault (approve all in that case)
@@ -295,7 +275,7 @@ describe("PW Pegger behavioural tests", () => {
 
     await context.pwpegger
       .connect(keeper)
-      .callIntervention(priceToPWPegRepr(innerContext.p1PoolPrice)) //must be current pool price
+      .callIntervention(priceToPWPegRepr(innerContext.pwPegPrice)) // new price we want to set
 
     const LPs_supplyAfter =
       await context.proxyContext.builtPoolResponse.pair.totalSupply()
@@ -357,15 +337,9 @@ describe("PW Pegger behavioural tests", () => {
         frontrunth: new Big(0.02).mul(1e6).toFixed(),
       },
     })
-    //
-    // II. Push peg price to EAC
-    //
-    await context.pwpegdonRef
-      .connect(pwpegdonRef_admin)
-      .mockUpdatePrice(priceToPWPegRepr(innerContext.pwPegPrice))
 
     //
-    // III. Call intervention from keeper
+    // II. Call intervention from keeper
     //
 
     // give approve from vault (approve all in that case)
@@ -396,7 +370,7 @@ describe("PW Pegger behavioural tests", () => {
 
     await context.pwpegger
       .connect(keeper)
-      .callIntervention(priceToPWPegRepr(innerContext.p1PoolPrice)) //must be current pool price
+      .callIntervention(priceToPWPegRepr(innerContext.pwPegPrice)) // new price we want to set
 
     const vault_balance_after =
       await context.proxyContext.builtPoolResponse.pair.balanceOf(

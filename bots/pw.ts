@@ -13,7 +13,6 @@ async function main() {
   //   config: {
   //     admin: "0xEab9ff1625eD15E88fb2bCdbb4f325AA4742972d",
   //     keeper: "0x548A2b214493290bB45D516f16176Be01dbf1674",
-  //     pwpegdonRef: "0x828761B78E22f5A24240d3EFBA04D1f0b25f4EFE",
   //     calibrator: "0xF3ca94706164ca970B649CE72F7e424ad18cd850",
   //     vault: "0x3718eCd4E97f4332F9652D0Ba224f228B55ec543",
   //     pool: "0xcf9f857ffe6ff32b41b2a0d0b4448c16564886de",

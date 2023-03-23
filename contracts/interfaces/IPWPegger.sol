@@ -10,9 +10,6 @@ interface IPWPegger {
     // keeper (permissioned) - EOA or multisig oracle account who is able to call sc invocation
     function updKeeper(address) external; // admin only
 
-    // admin only is able to update DONs EACAggregatorProxy, used as price and peg data refferences
-    function updPathwayDONRef(address) external; // admin only
-
     // admin only is able to update Corrector SCs refference: CalibratorProxy
     // increasing/decreasing gov token price on AMM during pw-intervention call
     function updCalibratorProxyRef(address) external; // admin only

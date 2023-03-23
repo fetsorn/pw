@@ -13,6 +13,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// @notice Just simplifies calculations
 
 contract CalibratorProxy is Ownable {
+
   ICalibrator private calibrator;
   IERC20 private base;
 

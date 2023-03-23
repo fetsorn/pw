@@ -9,7 +9,6 @@ describe("PWPeggerMock", function () {
     const pwconfig = {
       admin: admin.address,
       keeper: keeper.address,
-      pwpegdonRef: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
       calibrator: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
       vault: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",
       pool: "0xbb652A9FAc95B5203f44aa3492200b6aE6aD84e0",

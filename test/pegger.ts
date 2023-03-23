@@ -8,7 +8,6 @@ import { PWPegger } from "./../typechain/PWPegger.d"
 export type PWPeggerConfig = {
   admin: string
   keeper: string
-  pwpegdonRef: string
   calibrator: string
   vault: string
   pool: string

@@ -25,7 +25,6 @@ import { EACAggregatorProxyMock } from "~/typechain/EACAggregatorProxyMock"
 type Context = {
   pwpegger: PWPegger
   pwpeggerConfig: PWPeggerConfig
-  pwpegdonRef: EACAggregatorProxyMock
   proxyContext: {
     calibratorProxy: CalibratorProxy
     calibrator: Calibrator
@@ -83,17 +82,11 @@ const updateContext = async (
     ...overrideProxyCalibrateInput,
   })
 
-  const pwpegdonRef = await eacAggrProxyFactory
-    .connect(pwpegdonRef_admin)
-    .deploy(pwpegdonRef_admin.address, 6)
-
   const config: PWPeggerConfig = {
     // admin: string
     admin: deployer.address,
     // keeper: string
     keeper: keeper.address,
-    // pwpegdonRef: string
-    pwpegdonRef: pwpegdonRef.address,
     // calibrator: string
     calibrator: proxyContext.calibratorProxy.address,
     // vault: string
@@ -125,7 +118,6 @@ const updateContext = async (
     pwpegger,
     pwpeggerConfig: config,
     proxyContext,
-    pwpegdonRef,
   }
 }
 
@@ -168,14 +160,7 @@ async function main() {
   })
 
   //
-  // II. Push peg price to EAC
-  //
-  await context.pwpegdonRef
-    .connect(pwpegdonRef_admin)
-    .mockUpdatePrice(priceToPWPegRepr(innerContext.pwPegPrice))
-
-  //
-  // III. Call intervention from keeper
+  // II. Call intervention from keeper
   //
 
   // give approve from vault (approve all in that case)
@@ -199,7 +184,7 @@ async function main() {
 
   await context.pwpegger
     .connect(keeper)
-    .callIntervention(priceToPWPegRepr(innerContext.p1PoolPrice)) //must be current pool price
+    .callIntervention(priceToPWPegRepr(innerContext.pwPegPrice)) //must be current pool price
 
   const LPs_supplyAfter =
     await context.proxyContext.builtPoolResponse.pair.totalSupply()

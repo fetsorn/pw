@@ -34,21 +34,25 @@ async function mn() {
     "CalibratorProxy"
   )) as CalibratorProxy__factory
 
-  const pworacle = "0x548A2b214493290bB45D516f16176Be01dbf1674"
+  // const pworacle = "0x548A2b214493290bB45D516f16176Be01dbf1674"
   // const shamil = "0x3718eCd4E97f4332F9652D0Ba224f228B55ec543"
+  const tslaKeeperTestnet = ""
 
-  const spirit_pool_gton_wftm = "0x25f5b3840d414a21c4fc46d21699e54d48f75fdd"
+  // const spirit_pool_gton_wftm = "0x25f5b3840d414a21c4fc46d21699e54d48f75fdd"
+  const simTSLA_pool_gton = "0x45581064DE5264f458C59bbF861BA01142cC5b0b"
+
+  const simTSLA = "0xBca5De3E6Ea3B39770C0a6EF3793e8fA6424031e"
 
   // const calibratorProxy = "0xF3ca94706164ca970B649CE72F7e424ad18cd850"
   const calibrator = await calibratorFactory.deploy(
-    "0xc1be9a4d5d45beeacae296a7bd5fadbfc14602c4", // GTON
+    simTSLA, // quote
     "0x16327e3fbdaca3bcf7e38f5af2599d2ddc33ae52", // SPIRIT SWAP
-    "SPIRIT"
+    "OGX"
   )
 
   const calibratorProxy = await calibratorProxyFactory.deploy(
     calibrator.address,
-    "0xc1be9a4d5d45beeacae296a7bd5fadbfc14602c4" // GTON
+    simTSLA // GTON
   )
 
   console.log({
@@ -56,21 +60,19 @@ async function mn() {
     calibrator: calibrator.address,
   })
 
-  const pwpegbasedon = "0x828761B78E22f5A24240d3EFBA04D1f0b25f4EFE"
+  // const pwpegbasedon = "0x828761B78E22f5A24240d3EFBA04D1f0b25f4EFE"
 
   const config: PWPeggerConfig = {
     // admin: string
     admin: "0xEab9ff1625eD15E88fb2bCdbb4f325AA4742972d",
     // keeper: string
-    keeper: pworacle,
-    // pwpegdonRef: string
-    pwpegdonRef: pwpegbasedon,
+    keeper: tslaKeeperTestnet,
     // calibrator: string
     calibrator: calibratorProxy.address,
     // vault: string
     vault: "0xB3D22267E7260ec6c3931d50D215ABa5Fd54506a",
     // pool: string
-    pool: spirit_pool_gton_wftm,
+    pool: simTSLA_pool_gton,
     // token: string
     token: "0xc1be9a4d5d45beeacae296a7bd5fadbfc14602c4",
     /*
