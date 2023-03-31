@@ -133,7 +133,7 @@ contract PWPegger is IPWPegger {
             "Th Emergency Error: current price is much higher than keeperPrice");
     }
 
-    function _preparePWData(IUniswapV2Pair _pool, address _tokenGRef) view internal returns (PoolData memory) {
+    function _preparePWData(IUniswapV2Pair _pool, address _tokenGRef) public view returns (PoolData memory) {
         (
             uint112 reserve0, 
             uint112 reserve1, 
