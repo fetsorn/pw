@@ -10,7 +10,7 @@ import "./interfaces/IUniswapV2Pair.sol";
 import "./libraries/PWLibrary.sol";
 import "./libraries/PWConfig.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 
 struct PoolData {
@@ -46,10 +46,10 @@ contract PWPegger is IPWPegger {
         uint _dec = _pwconfig.decimals;
 
         require(
-            _dec > 0 &&
-            _pwconfig.frontrunth > 0 && 
-            _pwconfig.volatilityth > _pwconfig.frontrunth &&
-            _pwconfig.emergencyth > _pwconfig.volatilityth,
+            _dec > 0, // &&
+            // _pwconfig.frontrunth > 0 &&
+            // _pwconfig.volatilityth > _pwconfig.frontrunth &&
+            // _pwconfig.emergencyth > _pwconfig.volatilityth,
             "Error: wrong config parameters. Check th params and decimals"
         );
         // require(msg.sender != _pwconfig.admin, "Error: deployer cannot be an admin");
@@ -140,7 +140,7 @@ contract PWPegger is IPWPegger {
 
         PoolData memory poolData = getPoolData(pool, pwconfig.token);
 
-        _checkThConditionsOrRaiseException(poolData.p1, newQuotePrice);
+        // _checkThConditionsOrRaiseException(poolData.p1, newQuotePrice);
 
         if (newQuotePrice == poolData.p1) {
             revert("no price diff");
