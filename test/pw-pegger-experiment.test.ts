@@ -59,7 +59,7 @@ const updateContext = async (
     calibrator: proxyContext.calibratorProxy.address,
     vault: vault.address,
     pool: proxyContext.builtPoolResponse.pair.address,
-    token: proxyContext.ogxtToken.address,
+    quoteToken: proxyContext.ogxtToken.address,
     /*
 	  uint emergencyth - 50% (0.5 * 10^6)
 	  uint volatilityth - 3% (0.03 * 10^6)

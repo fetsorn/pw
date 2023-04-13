@@ -9,7 +9,7 @@ export type PWPeggerConfig = {
   calibrator: string
   vault: string
   pool: string
-  token: string
+  quoteToken: string
   emergencyth: BigNumberish
   volatilityth: BigNumberish
   frontrunth: BigNumberish

@@ -86,7 +86,7 @@ const updateContext = async (
     // pool: string
     pool: proxyContext.builtPoolResponse.pair.address,
     // token: string
-    token: proxyContext.ogxtToken.address,
+    quoteToken: proxyContext.ogxtToken.address,
     /*
         uint emergencyth - 10% (0.1 * 10^6)
         uint volatilityth - 3% (0.03 * 10^6)

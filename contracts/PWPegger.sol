@@ -90,12 +90,12 @@ contract PWPegger is IPWPegger {
         return statusPause;
     }
 
-    function updatePoolRef(address _pool) external override onlyAdmin() {
+    function updatePool(address _pool) external override onlyAdmin() {
         pwconfig.pool = _pool;
     }
 
-    function updateTokenRef(address _token) external override onlyAdmin() {
-        pwconfig.token = _token;
+    function updateQuoteToken(address _token) external override onlyAdmin() {
+        pwconfig.quoteToken = _token;
     }
 
     function updateEmergencyTh(uint _newEmergencyth) external override onlyAdmin() {
@@ -138,7 +138,7 @@ contract PWPegger is IPWPegger {
 
         IUniswapV2Pair pool = IUniswapV2Pair(pwconfig.pool);
 
-        PoolData memory poolData = getPoolData(pool, pwconfig.token);
+        PoolData memory poolData = getPoolData(pool, pwconfig.quoteToken);
 
         // _checkThConditionsOrRaiseException(poolData.p1, newQuotePrice);
 

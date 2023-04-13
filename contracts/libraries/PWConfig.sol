@@ -7,7 +7,7 @@ struct PWConfig {
     address calibrator;
     address vault;
     address pool;
-    address token;
+    address quoteToken;
     uint emergencyth;
     uint volatilityth;
     uint frontrunth;
