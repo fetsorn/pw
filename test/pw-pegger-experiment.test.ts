@@ -7,29 +7,33 @@ import { PWPegger } from "~/typechain"
 import { PWPegger__factory } from "~/typechain/factories/PWPegger__factory"
 
 import { PWPeggerConfig } from "./pegger"
-import { prepareTokensAndPoolsForProxy, CalibrateDirection, ProxyCalibrateInput } from "./pool"
+import {
+  prepareTokensAndPoolsForProxy,
+  CalibrateDirection,
+  ProxyCalibrateInput,
+} from "./pool"
 
 const getHRData = (val: string): string => {
   const gtonDecimals = 18
-  
-  return new BigNumber(val).dividedBy(10 ** gtonDecimals).toString(10);
-};
 
-const getPWNewVal = (newUSDPrice: number): string => {
-  const pwDecimals = 6;
-  
-  return new BigNumber(newUSDPrice)
-    .multipliedBy(10 ** pwDecimals)
-    .toString(10);
+  return new BigNumber(val).dividedBy(10 ** gtonDecimals).toString(10)
 }
 
-const updateContext = async (overrideProxyCalibrateInput: Partial<ProxyCalibrateInput>) => {
+const getPWNewVal = (newUSDPrice: number): string => {
+  const pwDecimals = 6
+
+  return new BigNumber(newUSDPrice).multipliedBy(10 ** pwDecimals).toString(10)
+}
+
+const updateContext = async (
+  overrideProxyCalibrateInput: Partial<ProxyCalibrateInput>
+) => {
   const [deployer, keeper, , vault, feeGetter] = await ethers.getSigners()
-  
+
   const pwpeggerFactory = (await ethers.getContractFactory(
-      "PWPegger"
+    "PWPegger"
   )) as PWPegger__factory
-  
+
   const proxyContext = await prepareTokensAndPoolsForProxy({
     direction: CalibrateDirection.Up,
     mintA: new Big(1_000_000_000).mul(1e18).toFixed(),
@@ -37,18 +41,18 @@ const updateContext = async (overrideProxyCalibrateInput: Partial<ProxyCalibrate
     liqA: new Big(100_000).mul(1e18).toFixed(),
     liqB: new Big(200_000).mul(1e18).toFixed(),
     base: {
-      name: "OGXT",
-      symbol: "OGXT",
-    },
-    quote: {
       name: "simTSLA",
       symbol: "simTSLA",
+    },
+    quote: {
+      name: "OGXT",
+      symbol: "OGXT",
     },
     deployer: vault,
     feeGetter: feeGetter.address,
     ...overrideProxyCalibrateInput,
   })
-  
+
   const config: PWPeggerConfig = {
     admin: deployer.address,
     keeper: keeper.address,
@@ -70,10 +74,10 @@ const updateContext = async (overrideProxyCalibrateInput: Partial<ProxyCalibrate
     frontrunth: new Big(0.000001).mul(1e6).toFixed(),
     decimals: 6,
   }
-  
+
   const pwpeggerResp = await pwpeggerFactory.deploy(config)
   const pwpegger = await pwpeggerResp.deployed()
-  
+
   return {
     pwpegger,
     pwpeggerConfig: config,
@@ -86,66 +90,75 @@ describe("PW Pegger - Debugging Test", () => {
     const [, keeper, , vault] = await ethers.getSigners()
 
     // GTON Testnet
-    // A = OGXT, B = simTSLA
+    // A (base) = simTSLA, B (quote) = OGXT
     const context = await updateContext({
-      mintA: '1003000200000000000000000',
-      mintB: '1000000000000000000000000',
-      liqA: '416217800006693611757452',
-      liqB: '518549398534971632240',
+      mintA: "1000000000000000000000000",
+      mintB: "1003000200000000000000000",
+      liqA: "518549398534971632240",
+      liqB: "416217800006693611757452",
     })
-  
+
     // Approve for Vault
-    await context.proxyContext.builtPoolResponse.pair.connect(vault).approve(
-      context.pwpegger.address,
-      await context.proxyContext.builtPoolResponse.pair.balanceOf(
-        vault.address
+    await context.proxyContext.builtPoolResponse.pair
+      .connect(vault)
+      .approve(
+        context.pwpegger.address,
+        await context.proxyContext.builtPoolResponse.pair.balanceOf(
+          vault.address
+        )
       )
-    )
-    
+
     // Test Cases
     // const TEST_CASES = [176.09, 180.54, 181.23, 180.31, 200.57, 160.75, 192.3];
-    const TEST_CASES = [1];
-    
+    const TEST_CASES = [176.09]
+
     for (let i = 0; i < TEST_CASES.length; i += 1) {
-      const newPrice = TEST_CASES[i];
-  
+      const newPrice = TEST_CASES[i]
+
       // Data Before
       const reservesBefore = await context.proxyContext.calibrator.getReserves(
-          context.proxyContext.builtPoolResponse.pair.address,
-          context.proxyContext.baseToken.address,
-          context.proxyContext.quoteToken.address
-      );
-  
+        context.proxyContext.builtPoolResponse.pair.address,
+        context.proxyContext.baseToken.address,
+        context.proxyContext.quoteToken.address
+      )
+
+      // Output - 1
+      console.log("\n\n", {
+        label: "Raw Data - 1",
+        reservesBeforeOGXT: reservesBefore[0].toString(),
+        reservesBeforeSimTSLA: reservesBefore[1].toString(),
+      })
+
       // Update
-      const newVal = getPWNewVal(newPrice);
-  
-      await context.pwpegger
-          .connect(keeper)
-          .callIntervention(newVal)
-  
+      const newVal = getPWNewVal(newPrice)
+
+      await context.pwpegger.connect(keeper).callIntervention(newVal)
+
       // Data After
       const reservesAfter = await context.proxyContext.calibrator.getReserves(
-          context.proxyContext.builtPoolResponse.pair.address,
-          context.proxyContext.baseToken.address,
-          context.proxyContext.quoteToken.address
-      );
-  
-      // Output
+        context.proxyContext.builtPoolResponse.pair.address,
+        context.proxyContext.baseToken.address,
+        context.proxyContext.quoteToken.address
+      )
+
+      // Output - 2
       console.log({
-        label: 'Raw Data',
+        label: "Raw Data - 2",
         reservesBeforeOGXT: reservesBefore[0].toString(),
         reservesBeforeSimTSLA: reservesBefore[1].toString(),
         reservesAfterOGXT: reservesAfter[0].toString(),
         reservesAfterSimTSLA: reservesAfter[1].toString(),
         diffOGXT: reservesBefore[0].sub(reservesAfter[0]).toString(),
         diffSimTSLA: reservesBefore[1].sub(reservesAfter[1]).toString(),
-      });
-  
+      })
+
       console.log({
-        label: 'Human-readable Data',
+        label: "Human-readable Data - 2",
         diffOGXT: getHRData(reservesBefore[0].sub(reservesAfter[0]).toString()),
-        diffSimTSLA: getHRData(reservesBefore[1].sub(reservesAfter[1]).toString()),
-      });
+        diffSimTSLA: getHRData(
+          reservesBefore[1].sub(reservesAfter[1]).toString()
+        ),
+      })
     }
   })
 })
