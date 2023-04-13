@@ -28,9 +28,9 @@ export async function buildPool(
   wallet: any,
   feeGetter: string,
   weth: WrappedNative,
-  baseToken: ERC20PresetFixedSupply,
+  ogxtToken: ERC20PresetFixedSupply,
   quoteToken: ERC20PresetFixedSupply,
-  baseTokenLiq: BigNumber,
+  ogxtTokenLiq: BigNumber,
   quoteTokenLiq: BigNumber
 ) {
   const factoryFactory = (await ethers.getContractFactory(
@@ -48,11 +48,11 @@ export async function buildPool(
   const router = await routerFactory.deploy(factory.address, weth.address) as OGXRouter02
 
   const createPairResult = await factory.createPair(
-    baseToken.address,
+    ogxtToken.address,
     quoteToken.address
   )
   const pairAddress = await factory.getPair(
-    baseToken.address,
+    ogxtToken.address,
     quoteToken.address
   )
 
@@ -62,18 +62,18 @@ export async function buildPool(
   const result = await pair.price0CumulativeLast()
   console.log({ result })
 
-  // let liquidityGTON = baseTokenLiq
+  // let liquidityGTON = ogxtTokenLiq
   // let liquidityWETH = quoteTokenLiq
-  await baseToken.connect(wallet).approve(router.address, baseTokenLiq)
+  await ogxtToken.connect(wallet).approve(router.address, ogxtTokenLiq)
   await quoteToken.connect(wallet).approve(router.address, quoteTokenLiq)
 
   let block = await wallet.provider.getBlock("latest")
   let timestamp = block.timestamp
 
   // console.log("addliq", [
-  //   baseToken.address,
+  //   ogxtToken.address,
   //   quoteToken.address,
-  //   baseTokenLiq,
+  //   ogxtTokenLiq,
   //   quoteTokenLiq,
   //   1,
   //   1,
@@ -84,9 +84,9 @@ export async function buildPool(
   await router
     .connect(wallet)
     .addLiquidity(
-      baseToken.address,
+      ogxtToken.address,
       quoteToken.address,
-      baseTokenLiq,
+      ogxtTokenLiq,
       quoteTokenLiq,
       1,
       1,
@@ -96,9 +96,9 @@ export async function buildPool(
 
   // await expect(
   //   router.addLiquidity(
-  //     baseToken.address,
+  //     ogxtToken.address,
   //     quoteToken.address,
-  //     baseTokenLiq,
+  //     ogxtTokenLiq,
   //     quoteTokenLiq,
   //     1,
   //     1,
@@ -107,11 +107,11 @@ export async function buildPool(
   //   )
   // )
   // .to.emit(pair, "Sync")
-  // .withArgs(baseTokenLiq.toString(), quoteTokenLiq.toString())
+  // .withArgs(ogxtTokenLiq.toString(), quoteTokenLiq.toString())
   // .to.emit(pair, "Mint")
-  // .withArgs(router.address, baseTokenLiq.toString(), quoteTokenLiq.toString())
+  // .withArgs(router.address, ogxtTokenLiq.toString(), quoteTokenLiq.toString())
 
-  // expect(await pair.token1()).to.eq(baseToken.address)
+  // expect(await pair.token1()).to.eq(ogxtToken.address)
   // expect(await pair.token0()).to.eq(quoteToken.address)
 
   const lpOwnerHoldings = await pair.balanceOf(wallet.address)
@@ -139,10 +139,10 @@ export type CalibrateToken = {
   symbol: string
 }
 export type CalibrateInput = {
-  mintA: string
-  mintB: string
-  liqA: string
-  liqB: string
+  mintOGXT: string
+  mintQuote: string
+  liqOGXT: string
+  liqQuote: string
   base: CalibrateToken
   quote: CalibrateToken
   targetPrice: number
@@ -157,10 +157,10 @@ export enum CalibrateDirection {
 }
 
 export type ProxyCalibrateInput = {
-  mintA: string
-  mintB: string
-  liqA: string
-  liqB: string
+  mintOGXT: string
+  mintQuote: string
+  liqOGXT: string
+  liqQuote: string
   base: CalibrateToken
   quote: CalibrateToken
   direction: CalibrateDirection
@@ -170,16 +170,16 @@ export type ProxyCalibrateInput = {
 }
 
 export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
-  const baseToken = await deployTokenFixedSupply(
+  const ogxtToken = await deployTokenFixedSupply(
     cfg.base.name,
     cfg.base.symbol,
-    cfg.mintA,
+    cfg.mintOGXT,
     await cfg.deployer.getAddress()
   )
   const quoteToken = await deployTokenFixedSupply(
     cfg.quote.name,
     cfg.quote.symbol,
-    cfg.mintB,
+    cfg.mintQuote,
     await cfg.deployer.getAddress()
   )
 
@@ -193,10 +193,10 @@ export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
     cfg.deployer,
     cfg.feeGetter,
     weth,
-    baseToken,
+    ogxtToken,
     quoteToken,
-    BigNumber.from(cfg.liqA),
-    BigNumber.from(cfg.liqB)
+    BigNumber.from(cfg.liqOGXT),
+    BigNumber.from(cfg.liqQuote)
   )
   const { router } = builtPoolResponse
 
@@ -205,7 +205,7 @@ export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
   )) as Calibrator__factory
 
   const calibrator = await calibratorFactory.deploy(
-    baseToken.address,
+    ogxtToken.address,
     router.address,
     "QUICK"
   )
@@ -216,14 +216,14 @@ export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
 
   const calibratorProxy = await calibratorProxyFactory.deploy(
     calibrator.address,
-    baseToken.address
+    ogxtToken.address
   )
 
   return {
     calibratorProxy,
     calibrator,
     builtPoolResponse,
-    baseToken,
+    ogxtToken,
     quoteToken,
   }
 }

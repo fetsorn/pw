@@ -18,7 +18,15 @@ library PWLibrary {
     _xlps = ( _lps * hasToBeExtractedLPShare) / n; //_lps has its own decimals
   }
 
-  function computeXLPForDirection(uint _g, uint _u, uint _pG1, uint _pG2, EAction _type, uint _lpsupply, uint decimals) internal pure returns (uint _xlps) {
+  function computeXLPForDirection(
+    uint _quoteToken, 
+    uint _baseToken, 
+    uint _pG1, 
+    uint _pG2, 
+    EAction _type, 
+    uint _lpTotalSupply, 
+    uint decimals
+  ) internal pure returns (uint _xlps) {
     // we have 2 formulas:
     // Up-Intervention: g*P1 + u = g’*P2 + u’, where g - withdrawable token, u - I-invariant (u = u'), P = u/g
     // Down-Intervention: g + u*Pu1 = g' + u'*Pu2, where u - withdrawable token, g - I-invariant, Pu = g/u = P^-1 = 1/P
@@ -27,10 +35,10 @@ library PWLibrary {
 
     if (_type == EAction.Up) {
       pRatio = computePRatio(n, _pG1, _pG2); // basic case: P1 & P2
-      _xlps = computeXLP(_g, pRatio, _lpsupply, decimals); //withdrawable token is _g
+      _xlps = computeXLP(_quoteToken, pRatio, _lpTotalSupply, decimals); //withdrawable token is _quoteToken
     } else if (_type == EAction.Down) {
       pRatio = computePRatio(n, n**2 / _pG1, n**2 / _pG2); // reverse prices: Pu1 & Pu2
-      _xlps = computeXLP(_u, pRatio, _lpsupply, decimals); //withdrawable token is _u
+      _xlps = computeXLP(_baseToken, pRatio, _lpTotalSupply, decimals); //withdrawable token is _baseToken
     } else {
       revert("Error: unknown type");
     }

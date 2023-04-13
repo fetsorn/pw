@@ -45,19 +45,19 @@ contract PWPeggerMock is IPWPegger {
         round = 0;
     }
 
-    function updAdmin(address _newAdmin) external override onlyAdmin() {
+    function updateAdmin(address _newAdmin) external override onlyAdmin() {
         pwconfig.admin = _newAdmin;
     }
 
-    function updKeeper(address _newKeeper) external override onlyAdmin() {
+    function updateKeeper(address _newKeeper) external override onlyAdmin() {
         pwconfig.keeper = _newKeeper;
     }
 
-    function updCalibratorProxyRef(address _newCalibrator) external override onlyAdmin() {
+    function updateCalibratorProxyRef(address _newCalibrator) external override onlyAdmin() {
         pwconfig.calibrator = _newCalibrator;
     }
 
-    function updVaultRef(address _newVault) external override onlyAdmin() {
+    function updateVaultRef(address _newVault) external override onlyAdmin() {
         pwconfig.vault = _newVault;
     }
 
@@ -73,23 +73,23 @@ contract PWPeggerMock is IPWPegger {
         return statusPause;
     }
 
-    function updPoolRef(address _pool) external override onlyAdmin() {
+    function updatePoolRef(address _pool) external override onlyAdmin() {
         pwconfig.pool = _pool;
     }
 
-    function updTokenRef(address _token) external override onlyAdmin() {
+    function updateTokenRef(address _token) external override onlyAdmin() {
         pwconfig.token = _token;
     }
 
-    function updEmergencyTh(uint _newEmergencyth) external override onlyAdmin() {
+    function updateEmergencyTh(uint _newEmergencyth) external override onlyAdmin() {
         pwconfig.emergencyth = _newEmergencyth;
     }
 
-    function updVolatilityTh(uint _newVolatilityth) external override onlyAdmin() {
+    function updateVolatilityTh(uint _newVolatilityth) external override onlyAdmin() {
         pwconfig.volatilityth = _newVolatilityth;
     }
 
-    function updFrontRunProtectionTh(uint _newFrontrunth) external override onlyAdmin() {
+    function updateFrontRunProtectionTh(uint _newFrontrunth) external override onlyAdmin() {
         pwconfig.frontrunth = _newFrontrunth;
     }
 

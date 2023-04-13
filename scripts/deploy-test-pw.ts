@@ -29,7 +29,7 @@ type Context = {
       router: OGXRouter02
       lpOwnerHoldings: BigNumber
     }
-    baseToken: ERC20PresetFixedSupply
+    ogxtToken: ERC20PresetFixedSupply
     quoteToken: ERC20PresetFixedSupply
   }
 }
@@ -56,11 +56,11 @@ const updateContext = async (
 
   const proxyContext = await prepareTokensAndPoolsForProxy({
     direction: CalibrateDirection.Up,
-    mintA: new Big(1_000_000_000).mul(1e18).toFixed(),
-    mintB: new Big(1_000_000_000).mul(1e18).toFixed(),
+    mintOGXT: new Big(1_000_000_000).mul(1e18).toFixed(),
+    mintQuote: new Big(1_000_000_000).mul(1e18).toFixed(),
     // Imitating Fantom
-    liqA: new Big(100_000).mul(1e18).toFixed(),
-    liqB: new Big(200_000).mul(1e18).toFixed(),
+    liqOGXT: new Big(100_000).mul(1e18).toFixed(),
+    liqQuote: new Big(200_000).mul(1e18).toFixed(),
     base: {
       name: "Graviton",
       symbol: "GTON",
@@ -86,7 +86,7 @@ const updateContext = async (
     // pool: string
     pool: proxyContext.builtPoolResponse.pair.address,
     // token: string
-    token: proxyContext.baseToken.address,
+    token: proxyContext.ogxtToken.address,
     /*
         uint emergencyth - 10% (0.1 * 10^6)
         uint volatilityth - 3% (0.03 * 10^6)
@@ -137,8 +137,8 @@ async function main() {
   //
   context = await updateContext({
     overrideProxyCalibrateInput: {
-      liqA: new Big(100_000).mul(1e18).toFixed(), //A - G
-      liqB: new Big(100_000).mul(innerContext.p1PoolPrice).mul(1e18).toFixed(), //B - means U
+      liqOGXT: new Big(100_000).mul(1e18).toFixed(), //A - G
+      liqQuote: new Big(100_000).mul(innerContext.p1PoolPrice).mul(1e18).toFixed(), //B - means U
     },
     overridePWPeggerConfig: {
       emergencyth: new Big(0.5).mul(1e6).toFixed(), //50% th
@@ -162,7 +162,7 @@ async function main() {
   const getPoolReserves = async () =>
     await context.proxyContext.calibrator.getReserves(
       context.proxyContext.builtPoolResponse.pair.address,
-      context.proxyContext.baseToken.address,
+      context.proxyContext.ogxtToken.address,
       context.proxyContext.quoteToken.address
     )
   const poolReserves_before = await getPoolReserves()

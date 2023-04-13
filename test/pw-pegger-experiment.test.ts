@@ -13,16 +13,16 @@ import {
   ProxyCalibrateInput,
 } from "./pool"
 
-const getHRData = (val: string): string => {
+const remove18Decimals = (val: string): string => {
   const gtonDecimals = 18
 
-  return new BigNumber(val).dividedBy(10 ** gtonDecimals).toString(10)
+  return new BigNumber(val).dividedBy(10 ** gtonDecimals).toString()
 }
 
-const getPWNewVal = (newUSDPrice: number): string => {
+const interventionPriceWithDecimals = (newUSDPrice: number): string => {
   const pwDecimals = 6
 
-  return new BigNumber(newUSDPrice).multipliedBy(10 ** pwDecimals).toString(10)
+  return new BigNumber(newUSDPrice).multipliedBy(10 ** pwDecimals).toString()
 }
 
 const updateContext = async (
@@ -36,17 +36,17 @@ const updateContext = async (
 
   const proxyContext = await prepareTokensAndPoolsForProxy({
     direction: CalibrateDirection.Up,
-    mintA: new Big(1_000_000_000).mul(1e18).toFixed(),
-    mintB: new Big(1_000_000_000).mul(1e18).toFixed(),
-    liqA: new Big(100_000).mul(1e18).toFixed(),
-    liqB: new Big(200_000).mul(1e18).toFixed(),
+    mintOGXT: new Big(1_000_000_000).mul(1e18).toFixed(),
+    mintQuote: new Big(1_000_000_000).mul(1e18).toFixed(),
+    liqOGXT: new Big(100_000).mul(1e18).toFixed(),
+    liqQuote: new Big(200_000).mul(1e18).toFixed(),
     base: {
-      name: "simTSLA",
-      symbol: "simTSLA",
-    },
-    quote: {
       name: "OGXT",
       symbol: "OGXT",
+    },
+    quote: {
+      name: "simTSLA",
+      symbol: "simTSLA",
     },
     deployer: vault,
     feeGetter: feeGetter.address,
@@ -59,7 +59,7 @@ const updateContext = async (
     calibrator: proxyContext.calibratorProxy.address,
     vault: vault.address,
     pool: proxyContext.builtPoolResponse.pair.address,
-    token: proxyContext.baseToken.address,
+    token: proxyContext.ogxtToken.address,
     /*
 	  uint emergencyth - 50% (0.5 * 10^6)
 	  uint volatilityth - 3% (0.03 * 10^6)
@@ -92,10 +92,10 @@ describe("PW Pegger - Debugging Test", () => {
     // GTON Testnet
     // A (base) = simTSLA, B (quote) = OGXT
     const context = await updateContext({
-      mintA: "1000000000000000000000000",
-      mintB: "1003000200000000000000000",
-      liqA: "518549398534971632240",
-      liqB: "416217800006693611757452",
+      mintOGXT: "1000000000000000000000000",
+      mintQuote: "1000000000000000000000000",
+      liqOGXT: "416217800006693611757452",
+      liqQuote: "518549398534971632240",
     })
 
     // Approve for Vault
@@ -109,8 +109,8 @@ describe("PW Pegger - Debugging Test", () => {
       )
 
     // Test Cases
-    // const TEST_CASES = [176.09, 180.54, 181.23, 180.31, 200.57, 160.75, 192.3];
-    const TEST_CASES = [176.09]
+    const TEST_CASES = [176.09, 180.54, 181.23]//, 180.31, 200.57, 160.75, 192.3];
+    // const TEST_CASES = [176.09]
 
     for (let i = 0; i < TEST_CASES.length; i += 1) {
       const newPrice = TEST_CASES[i]
@@ -118,7 +118,7 @@ describe("PW Pegger - Debugging Test", () => {
       // Data Before
       const reservesBefore = await context.proxyContext.calibrator.getReserves(
         context.proxyContext.builtPoolResponse.pair.address,
-        context.proxyContext.baseToken.address,
+        context.proxyContext.ogxtToken.address,
         context.proxyContext.quoteToken.address
       )
 
@@ -130,14 +130,14 @@ describe("PW Pegger - Debugging Test", () => {
       })
 
       // Update
-      const newVal = getPWNewVal(newPrice)
+      const newVal = interventionPriceWithDecimals(newPrice)
 
       await context.pwpegger.connect(keeper).callIntervention(newVal)
 
       // Data After
       const reservesAfter = await context.proxyContext.calibrator.getReserves(
         context.proxyContext.builtPoolResponse.pair.address,
-        context.proxyContext.baseToken.address,
+        context.proxyContext.ogxtToken.address,
         context.proxyContext.quoteToken.address
       )
 
@@ -154,8 +154,8 @@ describe("PW Pegger - Debugging Test", () => {
 
       console.log({
         label: "Human-readable Data - 2",
-        diffOGXT: getHRData(reservesBefore[0].sub(reservesAfter[0]).toString()),
-        diffSimTSLA: getHRData(
+        diffOGXT: remove18Decimals(reservesBefore[0].sub(reservesAfter[0]).toString()),
+        diffSimTSLA: remove18Decimals(
           reservesBefore[1].sub(reservesAfter[1]).toString()
         ),
       })

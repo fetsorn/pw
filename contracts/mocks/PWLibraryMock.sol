@@ -7,12 +7,12 @@ import "./../libraries/PWLibrary.sol";
 
 contract PWLibraryMock {
 
-  function computeXLP(uint _g, uint _pRatio, uint _lps, uint decimals) external view returns (uint) {
-    return PWLibrary.computeXLP(_g, _pRatio, _lps, decimals);
+  function computeXLP(uint _quoteToken, uint _pRatio, uint _lps, uint decimals) external view returns (uint) {
+    return PWLibrary.computeXLP(_quoteToken, _pRatio, _lps, decimals);
   }
 
-  function computeXLPForDirection(uint _g, uint _u, uint _p1, uint _pG2, PWLibrary.EAction _type, uint _lpsupply, uint decimals) external view returns (uint) {
-    return PWLibrary.computeXLPForDirection(_g, _u, _p1, _pG2, _type, _lpsupply, decimals);
+  function computeXLPForDirection(uint _quoteToken, uint _baseToken, uint _p1, uint _pG2, PWLibrary.EAction _type, uint _lpTotalSupply, uint decimals) external view returns (uint) {
+    return PWLibrary.computeXLPForDirection(_quoteToken, _baseToken, _p1, _pG2, _type, _lpTotalSupply, decimals);
   }
 
   function computePRatio(uint n, uint p1, uint p2) external view returns (uint) {

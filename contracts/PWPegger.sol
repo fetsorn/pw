@@ -14,10 +14,10 @@ import "hardhat/console.sol";
 
 
 struct PoolData {
-    uint g; // Quote token
-    uint u; // Base token - OGXT
+    uint quoteTokenAmount;
+    uint baseTokenAmount;
     uint p1; 
-    uint lp;
+    uint lpTotalSupply;
 }
 
 contract PWPegger is IPWPegger {
@@ -58,23 +58,23 @@ contract PWPegger is IPWPegger {
         round = 0;
     }
 
-    function updPWConfig(PWConfig memory _pwconfig) external onlyAdmin() {
+    function updatePWConfig(PWConfig memory _pwconfig) external onlyAdmin() {
         pwconfig = _pwconfig;
     }
 
-    function updAdmin(address _newAdmin) external override onlyAdmin() {
+    function updateAdmin(address _newAdmin) external override onlyAdmin() {
         pwconfig.admin = _newAdmin;
     }
 
-    function updKeeper(address _newKeeper) external override onlyAdmin() {
+    function updateKeeper(address _newKeeper) external override onlyAdmin() {
         pwconfig.keeper = _newKeeper;
     }
 
-    function updCalibratorProxyRef(address _newCalibrator) external override onlyAdmin() {
+    function updateCalibratorProxyRef(address _newCalibrator) external override onlyAdmin() {
         pwconfig.calibrator = _newCalibrator;
     }
 
-    function updVaultRef(address _newVault) external override onlyAdmin() {
+    function updateVaultRef(address _newVault) external override onlyAdmin() {
         pwconfig.vault = _newVault;
     }
 
@@ -90,23 +90,23 @@ contract PWPegger is IPWPegger {
         return statusPause;
     }
 
-    function updPoolRef(address _pool) external override onlyAdmin() {
+    function updatePoolRef(address _pool) external override onlyAdmin() {
         pwconfig.pool = _pool;
     }
 
-    function updTokenRef(address _token) external override onlyAdmin() {
+    function updateTokenRef(address _token) external override onlyAdmin() {
         pwconfig.token = _token;
     }
 
-    function updEmergencyTh(uint _newEmergencyth) external override onlyAdmin() {
+    function updateEmergencyTh(uint _newEmergencyth) external override onlyAdmin() {
         pwconfig.emergencyth = _newEmergencyth;
     }
 
-    function updVolatilityTh(uint _newVolatilityth) external override onlyAdmin() {
+    function updateVolatilityTh(uint _newVolatilityth) external override onlyAdmin() {
         pwconfig.volatilityth = _newVolatilityth;
     }
 
-    function updFrontRunProtectionTh(uint _newFrontrunth) external override onlyAdmin() {
+    function updateFrontRunProtectionTh(uint _newFrontrunth) external override onlyAdmin() {
         pwconfig.frontrunth = _newFrontrunth;
     }
 
@@ -150,22 +150,22 @@ contract PWPegger is IPWPegger {
         PWLibrary.EAction act = PWLibrary.findDirection(poolData.p1, newQuotePrice); //p1 - prev price, pPrice - peg price
 
         // console.log("computing PWLibrary.computeXLPForDirection");
-        // console.log("poolData.g %s", poolData.g);
-        // console.log("poolData.u %s", poolData.u);
+        // console.log("poolData.quoteTokenAmount %s", poolData.quoteTokenAmount);
+        // console.log("poolData.baseTokenAmount %s", poolData.baseTokenAmount);
         // console.log("poolData.p1 %s", poolData.p1);
         // console.log("pPrice %s", pPrice);
         // console.log("isUp?: %s", pPrice > poolData.p1);
-        // console.log("poolData.lp, %s", poolData.lp);
+        // console.log("poolData.lpTotalSupply, %s", poolData.lpTotalSupply);
         // console.log("pwconfig.decimals, %s", pwconfig.decimals);
 
         // Step-II: how many LPs
         uint xLPs = PWLibrary.computeXLPForDirection(
-            poolData.g, 
-            poolData.u, 
-            poolData.p1, 
+            poolData.quoteTokenAmount,
+            poolData.baseTokenAmount,
+            poolData.p1,
             newQuotePrice,
-            act, 
-            poolData.lp,
+            act,
+            poolData.lpTotalSupply,
             pwconfig.decimals
         );
 
@@ -179,7 +179,7 @@ contract PWPegger is IPWPegger {
         ICalibratorProxy calibrator = ICalibratorProxy(pwconfig.calibrator);
 
         if (act == PWLibrary.EAction.Up) {
-            calibrator.calibratePurelyViaPercentOfLPs_UP(
+            calibrator.calibratePurelyViaPercentOfLPs_baseTokenP(
                 pool,
                 xLPs,
                 1,
@@ -203,23 +203,23 @@ contract PWPegger is IPWPegger {
         return round;
     }
     
-    function getPoolData(IUniswapV2Pair _pool, address _tokenGRef) public view onlyKeeper() returns (PoolData memory) {
+    function getPoolData(IUniswapV2Pair _pool, address _quoteToken) public view onlyKeeper() returns (PoolData memory) {
         (
             uint112 reserve0,
             uint112 reserve1,
             uint32 blockTimestampLast
         ) = _pool.getReserves();
         
-        IERC20 tokenG = IERC20(_pool.token0() == _tokenGRef ? _pool.token0() : _pool.token1());
-        IERC20 tokenU = IERC20(!(_pool.token0() == _tokenGRef) ? _pool.token0() : _pool.token1());
+        IERC20 quoteToken = IERC20(_pool.token0() == _quoteToken ? _pool.token0() : _pool.token1());
+        IERC20 baseToken = IERC20(!(_pool.token0() == _quoteToken) ? _pool.token0() : _pool.token1());
         
-        uint decimalsG = uint(tokenG.decimals());
-        uint decimalsU = uint(tokenU.decimals());
+        uint decimalsQuote = uint(quoteToken.decimals());
+        uint decimalsBase = uint(baseToken.decimals());
         
         uint n = 10**pwconfig.decimals;
         
-        uint g = n*uint(_pool.token0() == _tokenGRef ? reserve0 : reserve1)/(10**decimalsG);
-        uint u = n*uint(!(_pool.token0() == _tokenGRef) ? reserve0 : reserve1)/(10**decimalsU);
+        uint g = n*uint(_pool.token0() == _quoteToken ? reserve0 : reserve1)/(10**decimalsQuote);
+        uint u = n*uint(!(_pool.token0() == _quoteToken) ? reserve0 : reserve1)/(10**decimalsBase);
         
         return PoolData(
             g,

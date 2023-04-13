@@ -30,7 +30,7 @@ describe("PW Pegger behavioural tests", () => {
         router: OGXRouter02
         lpOwnerHoldings: BigNumber
       }
-      baseToken: ERC20PresetFixedSupply
+      ogxtToken: ERC20PresetFixedSupply
       quoteToken: ERC20PresetFixedSupply
     }
   }
@@ -57,11 +57,11 @@ describe("PW Pegger behavioural tests", () => {
 
     const proxyContext = await prepareTokensAndPoolsForProxy({
       direction: CalibrateDirection.Up,
-      mintA: new Big(1_000_000_000).mul(1e18).toFixed(),
-      mintB: new Big(1_000_000_000).mul(1e18).toFixed(),
+      mintOGXT: new Big(1_000_000_000).mul(1e18).toFixed(),
+      mintQuote: new Big(1_000_000_000).mul(1e18).toFixed(),
       // Imitating Fantom
-      liqA: new Big(100_000).mul(1e18).toFixed(),
-      liqB: new Big(200_000).mul(1e18).toFixed(),
+      liqOGXT: new Big(100_000).mul(1e18).toFixed(),
+      liqQuote: new Big(200_000).mul(1e18).toFixed(),
       base: {
         name: "Graviton",
         symbol: "GTON",
@@ -87,7 +87,7 @@ describe("PW Pegger behavioural tests", () => {
       // pool: string
       pool: proxyContext.builtPoolResponse.pair.address,
       // token: string
-      token: proxyContext.baseToken.address,
+      token: proxyContext.ogxtToken.address,
       /*
         uint emergencyth - 50% (0.5 * 10^6)
         uint volatilityth - 3% (0.03 * 10^6)
@@ -142,8 +142,8 @@ describe("PW Pegger behavioural tests", () => {
     //
     context = await updateContext({
       overrideProxyCalibrateInput: {
-        liqA: new Big(100_000).mul(1e18).toFixed(), //A - G
-        liqB: new Big(100_000)
+        liqOGXT: new Big(100_000).mul(1e18).toFixed(), //A - G
+        liqQuote: new Big(100_000)
           .mul(innerContext.p1PoolPrice)
           .mul(1e18)
           .toFixed(), //B - means U
@@ -172,7 +172,7 @@ describe("PW Pegger behavioural tests", () => {
     const getPoolReserves = async () =>
       await context.proxyContext.calibrator.getReserves(
         context.proxyContext.builtPoolResponse.pair.address,
-        context.proxyContext.baseToken.address,
+        context.proxyContext.ogxtToken.address,
         context.proxyContext.quoteToken.address
       )
     const poolReserves_before = await getPoolReserves()
@@ -227,8 +227,8 @@ describe("PW Pegger behavioural tests", () => {
     //
     context = await updateContext({
       overrideProxyCalibrateInput: {
-        liqA: new Big(100_000).mul(1e18).toFixed(), //A - G
-        liqB: new Big(100_000)
+        liqOGXT: new Big(100_000).mul(1e18).toFixed(), //A - G
+        liqQuote: new Big(100_000)
           .mul(innerContext.p1PoolPrice)
           .mul(1e18)
           .toFixed(), //B - means U
@@ -257,7 +257,7 @@ describe("PW Pegger behavioural tests", () => {
     const getPoolReserves = async () =>
       await context.proxyContext.calibrator.getReserves(
         context.proxyContext.builtPoolResponse.pair.address,
-        context.proxyContext.baseToken.address,
+        context.proxyContext.ogxtToken.address,
         context.proxyContext.quoteToken.address
       )
     const poolReserves_before = await getPoolReserves()
@@ -317,8 +317,8 @@ describe("PW Pegger behavioural tests", () => {
     //
     context = await updateContext({
       overrideProxyCalibrateInput: {
-        liqA: new Big(100_000).mul(1e18).toFixed(), //A - G
-        liqB: new Big(100_000)
+        liqOGXT: new Big(100_000).mul(1e18).toFixed(), //A - G
+        liqQuote: new Big(100_000)
           .mul(innerContext.p1PoolPrice)
           .mul(1e18)
           .toFixed(), //B - means U
@@ -347,7 +347,7 @@ describe("PW Pegger behavioural tests", () => {
     const getPoolReserves = async () =>
       await context.proxyContext.calibrator.getReserves(
         context.proxyContext.builtPoolResponse.pair.address,
-        context.proxyContext.baseToken.address,
+        context.proxyContext.ogxtToken.address,
         context.proxyContext.quoteToken.address
       )
     const poolReserves_before = await getPoolReserves()
