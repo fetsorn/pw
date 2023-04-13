@@ -12,10 +12,10 @@ interface IPWPegger {
 
     // admin only is able to update Corrector SCs refference: CalibratorProxy
     // increasing/decreasing gov token price on AMM during pw-intervention call
-    function updateCalibratorProxyRef(address) external; // admin only
+    function updateCalibratorProxy(address) external; // admin only
 
     // admin only is able to update vault account associated with pw as funds and LP ops storage
-    function updateVaultRef(address) external; // admin only
+    function updateVault(address) external; // admin only
 
     // admin and keeper oracle are able to pause sc, but only admin can activate it back
     function setPauseOn() external; // keeper and admin

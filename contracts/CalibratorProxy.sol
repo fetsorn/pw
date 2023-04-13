@@ -28,16 +28,16 @@ contract CalibratorProxy is Ownable {
   function calibratePurelyViaPercentOfLPs_baseTokenP(
     IUniswapV2Pair pool,
     uint256 _liquidity,
-    uint256 n,
-    uint256 d,
+    uint256 numerator,
+    uint256 denominator,
     address to
   ) external {
-    uint256 amountOfLPs = _liquidity * n / d;
+    uint256 amountOfLPs = _liquidity * numerator / denominator;
 
     (uint256 reserveBase, uint256 reserveQuote) = calibrator.getReserves(
       pool,
       address(base),
-      address(calibrator.tokenFromPool(pool))
+      address(calibrator.getQuoteToken(pool))
     );
     (
       uint256 reserveBaseAfter,
@@ -70,16 +70,16 @@ contract CalibratorProxy is Ownable {
   function calibratePurelyViaPercentOfLPs_DOWN(
     IUniswapV2Pair pool,
     uint256 _liquidity,
-    uint256 n,
-    uint256 d,
+    uint256 numerator,
+    uint256 denominator,
     address to
   ) external {
-    uint256 amountOfLPs = _liquidity * n / d;
+    uint256 amountOfLPs = _liquidity * numerator / denominator;
 
     (uint256 reserveBase, uint256 reserveQuote) = calibrator.getReserves(
       pool,
       address(base),
-      address(calibrator.tokenFromPool(pool))
+      address(calibrator.getQuoteToken(pool))
     );
     (
       uint256 reserveBaseAfter,

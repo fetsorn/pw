@@ -70,11 +70,11 @@ contract PWPegger is IPWPegger {
         pwconfig.keeper = _newKeeper;
     }
 
-    function updateCalibratorProxyRef(address _newCalibrator) external override onlyAdmin() {
+    function updateCalibratorProxy(address _newCalibrator) external override onlyAdmin() {
         pwconfig.calibrator = _newCalibrator;
     }
 
-    function updateVaultRef(address _newVault) external override onlyAdmin() {
+    function updateVault(address _newVault) external override onlyAdmin() {
         pwconfig.vault = _newVault;
     }
 
@@ -112,8 +112,11 @@ contract PWPegger is IPWPegger {
 
     function _checkThConditionsOrRaiseException(uint _currPrice, uint _pwPrice) view internal {
         // _currPrice and _pwPrice must be same decimals
-        uint n = 10**pwconfig.decimals;
-        uint priceDiff = _currPrice > _pwPrice ? n*(_currPrice - _pwPrice)/_currPrice : n*(_pwPrice - _currPrice)/_currPrice;
+        uint n = 10 ** pwconfig.decimals;
+        uint priceDiff = 
+            _currPrice > _pwPrice ? 
+            n*(_currPrice - _pwPrice)/_currPrice : 
+            n*(_pwPrice - _currPrice)/_currPrice;
         require(priceDiff < pwconfig.emergencyth, 
             "Th Emergency Error: price diff exceeds emergency threshold");
         require(priceDiff >= pwconfig.volatilityth, 
@@ -125,7 +128,10 @@ contract PWPegger is IPWPegger {
     function _checkThFrontrunOrRaiseException(uint _currPrice, uint _keeperPrice) view internal {
         // _currPrice and _keeperPrice must be same decimals
         uint n = 10**pwconfig.decimals;
-        uint priceDiff = _currPrice > _keeperPrice ? n*(_currPrice - _keeperPrice)/_keeperPrice : n*(_keeperPrice - _currPrice)/_keeperPrice;
+        uint priceDiff = 
+            _currPrice > _keeperPrice ? 
+            n*(_currPrice - _keeperPrice)/_keeperPrice : 
+            n*(_keeperPrice - _currPrice)/_keeperPrice;
 
         require(priceDiff <= pwconfig.frontrunth, 
             "Th FrontRun Error: current price is much higher than keeperPrice");
@@ -182,8 +188,8 @@ contract PWPegger is IPWPegger {
             calibrator.calibratePurelyViaPercentOfLPs_baseTokenP(
                 pool,
                 xLPs,
-                1,
-                1,
+                1, // numerator
+                1, // denomenator. Basically we just use 1/1 - entire liquidity
                 pwconfig.vault
             );
         } else if (act == PWLibrary.EAction.Down) {
@@ -216,15 +222,17 @@ contract PWPegger is IPWPegger {
         uint decimalsQuote = uint(quoteToken.decimals());
         uint decimalsBase = uint(baseToken.decimals());
         
-        uint n = 10**pwconfig.decimals;
+        uint n = 10 ** pwconfig.decimals;
         
-        uint g = n*uint(_pool.token0() == _quoteToken ? reserve0 : reserve1)/(10**decimalsQuote);
-        uint u = n*uint(!(_pool.token0() == _quoteToken) ? reserve0 : reserve1)/(10**decimalsBase);
+        uint quoteAmount = 
+            n * uint(_pool.token0() == _quoteToken ? reserve0 : reserve1) / (10**decimalsQuote);
+        uint baseAmount = 
+            n * uint(!(_pool.token0() == _quoteToken) ? reserve0 : reserve1) / (10**decimalsBase);
         
         return PoolData(
-            g,
-            u,
-            n*u/g,
+            quoteAmount,
+            baseAmount,
+            n * baseAmount / quoteAmount,
             _pool.totalSupply()
         );
     }

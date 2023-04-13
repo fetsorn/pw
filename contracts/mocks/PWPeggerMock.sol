@@ -53,11 +53,11 @@ contract PWPeggerMock is IPWPegger {
         pwconfig.keeper = _newKeeper;
     }
 
-    function updateCalibratorProxyRef(address _newCalibrator) external override onlyAdmin() {
+    function updateCalibratorProxy(address _newCalibrator) external override onlyAdmin() {
         pwconfig.calibrator = _newCalibrator;
     }
 
-    function updateVaultRef(address _newVault) external override onlyAdmin() {
+    function updateVault(address _newVault) external override onlyAdmin() {
         pwconfig.vault = _newVault;
     }
 

@@ -9,7 +9,7 @@ import "./IUniswapV2Pair.sol";
 
 interface ICalibrator {
 
-  function tokenFromPool(IUniswapV2Pair pool) external view returns (IERC20 token);
+  function getQuoteToken(IUniswapV2Pair pool) external view returns (IERC20 token);
 
   function getReserves(
     IUniswapV2Pair pool,
@@ -22,7 +22,7 @@ interface ICalibrator {
     uint256 reserveQuoteBefore,
     uint256 totalSupplyBefore,
     uint256 kLastBefore,
-    uint256 liquidityRemove
+    uint256 amountToRemove
   )
     external
     view

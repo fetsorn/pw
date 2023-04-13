@@ -17,11 +17,11 @@ contract CalibratorProxyMock is ICalibratorProxy {
     function calibratePurelyViaPercentOfLPs_baseTokenP(
         IUniswapV2Pair pool,
         uint256 _liquidity,
-        uint256 n,
-        uint256 d,
+        uint256 numerator,
+        uint256 denominator,
         address to
     ) external override {
-        require(n == 1 && d == 1, "Error: wrong n and d params, must be 1");
+        require(numerator == 1 && denominator == 1, "Error: wrong n and d params, must be 1");
         lps = _liquidity;
         upOrDown = 1; // 1 means Up
         vault = to;
@@ -30,11 +30,11 @@ contract CalibratorProxyMock is ICalibratorProxy {
     function calibratePurelyViaPercentOfLPs_DOWN(
         IUniswapV2Pair pool,
         uint256 _liquidity,
-        uint256 n,
-        uint256 d,
+        uint256 numerator,
+        uint256 denominator,
         address to
     ) external override {
-        require(n == 1 && d == 1, "Error: wrong n and d params, must be 1");
+        require(numerator == 1 && denominator == 1, "Error: wrong n and d params, must be 1");
         lps = _liquidity;
         upOrDown = 2; // 2 means Down
         vault = to;
