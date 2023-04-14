@@ -66,7 +66,6 @@ const updateContext = async (
 	  uint frontrunth - 2% (0.02 * 10^6);
 	*/
     // emergencyth: new Big(0.5).mul(1e6).toFixed(),
-    // emergencyth: new Big(0.000003).mul(1e6).toFixed(),
     emergencyth: new Big(0.000804).mul(1e6).toFixed(),
     // volatilityth: new Big(0.03).mul(1e6).toFixed(),
     volatilityth: new Big(0.000002).mul(1e6).toFixed(),
@@ -90,12 +89,41 @@ describe("PW Pegger - Debugging Test", () => {
     const [, keeper, , vault] = await ethers.getSigners()
 
     // GTON Testnet
-    // A (base) = simTSLA, B (quote) = OGXT
+    const ogxtMint = "1003000200000000000000000"
+    const ogxtPoolLiq = "416217800006693611757452"
+
+    const simTSLAMint = "1000000000000000000000000"
+    const simTSLAPoolLiq = "518549398534971632240"
+
     const context = await updateContext({
-      mintOGXT: "1000000000000000000000000",
-      mintQuote: "1000000000000000000000000",
-      liqOGXT: "416217800006693611757452",
-      liqQuote: "518549398534971632240",
+      mintOGXT: ogxtMint,
+      mintQuote: simTSLAMint,
+      liqOGXT: ogxtPoolLiq,
+      liqQuote: simTSLAPoolLiq,
+    })
+
+    // Utility Info
+    const token0Addr =
+      await context.proxyContext.builtPoolResponse.pair.token0()
+
+    const ogxtAddr = context.proxyContext.ogxtToken.address
+    const simTSLAAddr = context.proxyContext.quoteToken.address
+
+    const ogxtTokenIdx = ogxtAddr === token0Addr ? 0 : 1
+    const simTSLATokenIdx = simTSLAAddr === token0Addr ? 0 : 1
+
+    console.log({
+      label: 'Init Data for Tokens',
+      ogxtAddr,
+      ogxtTokenIdx,
+      simTSLAAddr,
+      simTSLATokenIdx,
+    })
+
+    console.log({
+      label: 'Start Liquidity',
+      ogxtPoolLiq,
+      simTSLAPoolLiq,
     })
 
     // Approve for Vault
@@ -109,8 +137,8 @@ describe("PW Pegger - Debugging Test", () => {
       )
 
     // Test Cases
-    const TEST_CASES = [176.09, 180.54, 181.23]//, 180.31, 200.57, 160.75, 192.3];
-    // const TEST_CASES = [176.09]
+    // const TEST_CASES = [176.09, 180.54, 181.23, 180.31, 200.57, 160.75, 192.3]
+    const TEST_CASES = [176.09, 180.54, 181.23]
 
     for (let i = 0; i < TEST_CASES.length; i += 1) {
       const newPrice = TEST_CASES[i]
@@ -125,8 +153,8 @@ describe("PW Pegger - Debugging Test", () => {
       // Output - 1
       console.log("\n\n", {
         label: "Raw Data - 1",
-        reservesBeforeOGXT: reservesBefore[0].toString(),
-        reservesBeforeSimTSLA: reservesBefore[1].toString(),
+        reservesBeforeOGXT: reservesBefore[ogxtTokenIdx].toString(),
+        reservesBeforeSimTSLA: reservesBefore[simTSLATokenIdx].toString(),
       })
 
       // Update
@@ -144,19 +172,29 @@ describe("PW Pegger - Debugging Test", () => {
       // Output - 2
       console.log({
         label: "Raw Data - 2",
-        reservesBeforeOGXT: reservesBefore[0].toString(),
-        reservesBeforeSimTSLA: reservesBefore[1].toString(),
-        reservesAfterOGXT: reservesAfter[0].toString(),
-        reservesAfterSimTSLA: reservesAfter[1].toString(),
-        diffOGXT: reservesBefore[0].sub(reservesAfter[0]).toString(),
-        diffSimTSLA: reservesBefore[1].sub(reservesAfter[1]).toString(),
+        reservesBeforeOGXT: reservesBefore[ogxtTokenIdx].toString(),
+        reservesBeforeSimTSLA: reservesBefore[simTSLATokenIdx].toString(),
+        reservesAfterOGXT: reservesAfter[ogxtTokenIdx].toString(),
+        reservesAfterSimTSLA: reservesAfter[simTSLATokenIdx].toString(),
+        diffOGXT: reservesBefore[ogxtTokenIdx]
+          .sub(reservesAfter[ogxtTokenIdx])
+          .toString(),
+        diffSimTSLA: reservesBefore[simTSLATokenIdx]
+          .sub(reservesAfter[simTSLATokenIdx])
+          .toString(),
       })
 
       console.log({
         label: "Human-readable Data - 2",
-        diffOGXT: remove18Decimals(reservesBefore[0].sub(reservesAfter[0]).toString()),
+        diffOGXT: remove18Decimals(
+          reservesBefore[ogxtTokenIdx]
+            .sub(reservesAfter[ogxtTokenIdx])
+            .toString()
+        ),
         diffSimTSLA: remove18Decimals(
-          reservesBefore[1].sub(reservesAfter[1]).toString()
+          reservesBefore[simTSLATokenIdx]
+            .sub(reservesAfter[simTSLATokenIdx])
+            .toString()
         ),
       })
     }

@@ -12,7 +12,7 @@ async function mutatePWConfig(addr: string, config: PWPeggerConfig) {
 
   const pwpegger = factory.attach(addr)
 
-  const r = await pwpegger.updPWConfig(config)
+  const r = await pwpegger.updatePWConfig(config)
   const resp = await r.wait()
 
   return resp
