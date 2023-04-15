@@ -153,7 +153,7 @@ contract PWPegger is IPWPegger {
         }
 
         // Step-I: what to do - up or down
-        PWLibrary.EAction act = PWLibrary.findDirection(poolData.p1, newQuotePrice); //p1 - prev price, pPrice - peg price
+        PWLibrary.PriceDirection direction = PWLibrary.findDirection(poolData.p1, newQuotePrice); //p1 - prev price, pPrice - peg price
 
         // console.log("computing PWLibrary.computeXLPForDirection");
         // console.log("poolData.quoteTokenAmount %s", poolData.quoteTokenAmount);
@@ -170,7 +170,7 @@ contract PWPegger is IPWPegger {
             poolData.baseTokenAmount,
             poolData.p1,
             newQuotePrice,
-            act,
+            direction,
             poolData.lpTotalSupply,
             pwconfig.decimals
         );
@@ -184,7 +184,7 @@ contract PWPegger is IPWPegger {
 
         ICalibratorProxy calibrator = ICalibratorProxy(pwconfig.calibrator);
 
-        if (act == PWLibrary.EAction.Up) {
+        if (direction == PWLibrary.PriceDirection.Up) {
             calibrator.calibratePurelyViaPercentOfLPs_baseTokenP(
                 pool,
                 xLPs,
@@ -192,7 +192,7 @@ contract PWPegger is IPWPegger {
                 1, // denomenator. Basically we just use 1/1 - entire liquidity
                 pwconfig.vault
             );
-        } else if (act == PWLibrary.EAction.Down) {
+        } else if (direction == PWLibrary.PriceDirection.Down) {
             calibrator.calibratePurelyViaPercentOfLPs_DOWN(
                 pool,
                 xLPs,
@@ -201,7 +201,7 @@ contract PWPegger is IPWPegger {
                 pwconfig.vault
             );
         } else {
-            revert("invalid pw action");
+            revert("invalid pw direction");
         }
     }
     

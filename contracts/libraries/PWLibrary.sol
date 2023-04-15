@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 library PWLibrary {
 
-  enum EAction {
+  enum PriceDirection {
     Up,
     Down
   }
@@ -21,9 +21,9 @@ library PWLibrary {
   function computeXLPForDirection(
     uint _quoteToken, 
     uint _baseToken, 
-    uint _pG1, 
-    uint _pG2, 
-    EAction _type, 
+    uint _currentPrice, 
+    uint _newPrice, 
+    PriceDirection _type, 
     uint _lpTotalSupply, 
     uint decimals
   ) internal pure returns (uint _xlps) {
@@ -33,11 +33,11 @@ library PWLibrary {
     uint n = 10**decimals;
     uint pRatio;
 
-    if (_type == EAction.Up) {
-      pRatio = computePRatio(n, _pG1, _pG2); // basic case: P1 & P2
+    if (_type == PriceDirection.Up) {
+      pRatio = computePRatio(n, _currentPrice, _newPrice); // basic case: P1 & P2
       _xlps = computeXLP(_quoteToken, pRatio, _lpTotalSupply, decimals); //withdrawable token is _quoteToken
-    } else if (_type == EAction.Down) {
-      pRatio = computePRatio(n, n**2 / _pG1, n**2 / _pG2); // reverse prices: Pu1 & Pu2
+    } else if (_type == PriceDirection.Down) {
+      pRatio = computePRatio(n, n**2 / _currentPrice, n**2 / _newPrice); // reverse prices: Pu1 & Pu2
       _xlps = computeXLP(_baseToken, pRatio, _lpTotalSupply, decimals); //withdrawable token is _baseToken
     } else {
       revert("Error: unknown type");
@@ -45,8 +45,8 @@ library PWLibrary {
     return _xlps;
   }
 
-function findDirection(uint p1, uint p2) internal pure returns (EAction _type) {
-  _type = p1 >= p2 ? EAction.Down : EAction.Up;
+function findDirection(uint p1, uint p2) internal pure returns (PriceDirection _type) {
+  _type = p1 >= p2 ? PriceDirection.Down : PriceDirection.Up;
   return _type;
 }
 
