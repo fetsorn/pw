@@ -42,7 +42,7 @@ interface ICalibrator {
     address to
   ) external;
 
-  function calibrate(
+  function calibrateUp(
     IUniswapV2Pair pool,
     uint256 liquidity,
     uint256 amountBuy,

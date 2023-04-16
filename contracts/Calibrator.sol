@@ -57,9 +57,9 @@ contract Calibrator is ICalibrator {
         uint256 amountBaseBuy3,
         address to
     ) external {
-        calibrate(pool1, liquidity1, amountBaseBuy1, to);
-        calibrate(pool2, liquidity2, amountBaseBuy2, to);
-        calibrate(pool3, liquidity3, amountBaseBuy3, to);
+        calibrateUp(pool1, liquidity1, amountBaseBuy1, to);
+        calibrateUp(pool2, liquidity2, amountBaseBuy2, to);
+        calibrateUp(pool3, liquidity3, amountBaseBuy3, to);
     }
 
     function calibrate2(
@@ -71,8 +71,8 @@ contract Calibrator is ICalibrator {
         uint256 amountBaseBuy2,
         address to
     ) external {
-        calibrate(pool1, liquidity1, amountBaseBuy1, to);
-        calibrate(pool2, liquidity2, amountBaseBuy2, to);
+        calibrateUp(pool1, liquidity1, amountBaseBuy1, to);
+        calibrateUp(pool2, liquidity2, amountBaseBuy2, to);
     }
 
     function calibrateSafe(
@@ -112,7 +112,7 @@ contract Calibrator is ICalibrator {
         retrieve(pool, to, token);
     }
 
-    function calibrate(
+    function calibrateUp(
         IUniswapV2Pair pool,
         uint256 liquidity,
         uint256 amountBuy,
@@ -175,7 +175,7 @@ contract Calibrator is ICalibrator {
                 reserveQuote,
                 totalSupply,
                 kLast,
-                liquidity
+                liquidity // removing all the liquidity at hand?
             );
         uint256 deadline = block.timestamp + 86400;
         console.log("remove liquidity", amountBaseAfter, amountQuoteAfter, liquidity);

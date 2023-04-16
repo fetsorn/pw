@@ -136,9 +136,11 @@ describe("PW Pegger - Debugging Test", () => {
         )
       )
 
+    // At this point in time the price of simTSLA in OGXT is about 803
     // Test Cases
     // const TEST_CASES = [176.09, 180.54, 181.23, 180.31, 200.57, 160.75, 192.3]
-    const TEST_CASES = [176.09, 180.54, 181.23]
+    // const TEST_CASES = [176.09, 180.54, 181.23]
+    const TEST_CASES = [810]
 
     for (let i = 0; i < TEST_CASES.length; i += 1) {
       const newPrice = TEST_CASES[i]

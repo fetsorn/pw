@@ -14,7 +14,7 @@ contract CalibratorProxyMock is ICalibratorProxy {
         upOrDown = 0;
     }
 
-    function calibratePurelyViaPercentOfLPs_baseTokenP(
+    function calibratePurelyViaPercentOfLPs_UP(
         IUniswapV2Pair pool,
         uint256 _liquidity,
         uint256 numerator,

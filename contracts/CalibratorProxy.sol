@@ -25,7 +25,7 @@ contract CalibratorProxy is Ownable {
     base = _base;
   }
 
-  function calibratePurelyViaPercentOfLPs_baseTokenP(
+  function calibratePurelyViaPercentOfLPs_UP(
     IUniswapV2Pair pool,
     uint256 _liquidity,
     uint256 numerator,
@@ -59,7 +59,7 @@ contract CalibratorProxy is Ownable {
 
     uint256 amountOut = calibrator.getAmountOut(amountQuoteAfter, reserveQuoteAfter, reserveBaseAfter);
 
-    calibrator.calibrate(
+    calibrator.calibrateUp(
       pool,
       amountOfLPs,
       amountOut,

@@ -185,7 +185,7 @@ contract PWPegger is IPWPegger {
         ICalibratorProxy calibrator = ICalibratorProxy(pwconfig.calibrator);
 
         if (direction == PWLibrary.PriceDirection.Up) {
-            calibrator.calibratePurelyViaPercentOfLPs_baseTokenP(
+            calibrator.calibratePurelyViaPercentOfLPs_UP(
                 pool,
                 xLPs,
                 1, // numerator
