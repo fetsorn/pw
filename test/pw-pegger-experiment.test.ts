@@ -126,15 +126,11 @@ describe("PW Pegger - Debugging Test", () => {
       simTSLAPoolLiq,
     })
 
-    // Approve for Vault
-    await context.proxyContext.builtPoolResponse.pair
-      .connect(vault)
-      .approve(
-        context.pwpegger.address,
-        await context.proxyContext.builtPoolResponse.pair.balanceOf(
-          vault.address
-        )
-      )
+    const calibratorBase = await context.proxyContext.calibrator.base()
+    console.log({
+      label: 'Base address from Calibrator',
+      calibratorBase,
+    })
 
     // At this point in time the price of simTSLA in OGXT is about 803
     // Test Cases
@@ -143,6 +139,17 @@ describe("PW Pegger - Debugging Test", () => {
     const TEST_CASES = [810]
 
     for (let i = 0; i < TEST_CASES.length; i += 1) {
+
+      // Approve for Vault
+      await context.proxyContext.builtPoolResponse.pair
+      .connect(vault)
+      .approve(
+        context.pwpegger.address,
+        await context.proxyContext.builtPoolResponse.pair.balanceOf(
+          vault.address
+        )
+      )
+
       const newPrice = TEST_CASES[i]
 
       // Data Before
@@ -199,6 +206,7 @@ describe("PW Pegger - Debugging Test", () => {
             .toString()
         ),
       })
+      console.log("=======================\n=======================\n=======================")
     }
   })
 })

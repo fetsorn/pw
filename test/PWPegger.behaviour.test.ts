@@ -87,7 +87,7 @@ describe("PW Pegger behavioural tests", () => {
       // pool: string
       pool: proxyContext.builtPoolResponse.pair.address,
       // token: string
-      quoteToken: proxyContext.ogxtToken.address,
+      quoteToken: proxyContext.quoteToken.address,
       /*
         uint emergencyth - 50% (0.5 * 10^6)
         uint volatilityth - 3% (0.03 * 10^6)

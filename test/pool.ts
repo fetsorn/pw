@@ -205,7 +205,7 @@ export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
   )) as Calibrator__factory
 
   const calibrator = await calibratorFactory.deploy(
-    ogxtToken.address,
+    quoteToken.address,
     router.address,
     "QUICK"
   )
@@ -216,7 +216,7 @@ export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
 
   const calibratorProxy = await calibratorProxyFactory.deploy(
     calibrator.address,
-    ogxtToken.address
+    quoteToken.address
   )
 
   return {
