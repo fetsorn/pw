@@ -81,7 +81,7 @@ describe("PW Pegger behavioural tests", () => {
       // keeper: string
       keeper: keeper.address,
       // calibrator: string
-      calibrator: proxyContext.calibratorProxy.address,
+      calibratorProxy: proxyContext.calibratorProxy.address,
       // vault: string
       vault: vault.address,
       // pool: string

@@ -6,7 +6,7 @@ import { PWPegger, PWPegger__factory } from "~/typechain"
 export type PWPeggerConfig = {
   admin: string
   keeper: string
-  calibrator: string
+  calibratorProxy: string
   vault: string
   pool: string
   quoteToken: string

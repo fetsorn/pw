@@ -56,7 +56,7 @@ const updateContext = async (
   const config: PWPeggerConfig = {
     admin: deployer.address,
     keeper: keeper.address,
-    calibrator: proxyContext.calibratorProxy.address,
+    calibratorProxy: proxyContext.calibratorProxy.address,
     vault: vault.address,
     pool: proxyContext.builtPoolResponse.pair.address,
     quoteToken: proxyContext.quoteToken.address,
@@ -103,8 +103,10 @@ describe("PW Pegger - Debugging Test", () => {
     })
 
     // Utility Info
-    const token0Addr =
-      await context.proxyContext.builtPoolResponse.pair.token0()
+    const [calibratorBaseAddr, token0Addr] = await Promise.all([
+      context.proxyContext.calibrator.base(),
+      context.proxyContext.builtPoolResponse.pair.token0(),
+    ])
 
     const ogxtAddr = context.proxyContext.ogxtToken.address
     const simTSLAAddr = context.proxyContext.quoteToken.address
@@ -113,7 +115,7 @@ describe("PW Pegger - Debugging Test", () => {
     const simTSLATokenIdx = simTSLAAddr === token0Addr ? 0 : 1
 
     console.log({
-      label: 'Init Data for Tokens',
+      label: "Init Data for Tokens",
       ogxtAddr,
       ogxtTokenIdx,
       simTSLAAddr,
@@ -121,36 +123,34 @@ describe("PW Pegger - Debugging Test", () => {
     })
 
     console.log({
-      label: 'Start Liquidity',
+      label: "Start Liquidity",
       ogxtPoolLiq,
       simTSLAPoolLiq,
     })
 
-    const calibratorBase = await context.proxyContext.calibrator.base()
     console.log({
-      label: 'Base address from Calibrator',
-      calibratorBase,
+      label: "Base address from Calibrator",
+      calibratorBaseAddr,
     })
 
     // At this point in time the price of simTSLA in OGXT is about 803
     // Test Cases
     // const TEST_CASES = [176.09, 180.54, 181.23, 180.31, 200.57, 160.75, 192.3]
-    // const TEST_CASES = [176.09, 180.54, 181.23]
+    // const TEST_CASES = [810, 807, 811, 800]
     const TEST_CASES = [810]
 
     for (let i = 0; i < TEST_CASES.length; i += 1) {
+      const newPrice = TEST_CASES[i]
 
       // Approve for Vault
       await context.proxyContext.builtPoolResponse.pair
-      .connect(vault)
-      .approve(
-        context.pwpegger.address,
-        await context.proxyContext.builtPoolResponse.pair.balanceOf(
-          vault.address
+        .connect(vault)
+        .approve(
+          context.pwpegger.address,
+          await context.proxyContext.builtPoolResponse.pair.balanceOf(
+            vault.address
+          )
         )
-      )
-
-      const newPrice = TEST_CASES[i]
 
       // Data Before
       const reservesBefore = await context.proxyContext.calibrator.getReserves(
@@ -206,7 +206,9 @@ describe("PW Pegger - Debugging Test", () => {
             .toString()
         ),
       })
-      console.log("=======================\n=======================\n=======================")
+      console.log(
+        "=======================\n=======================\n======================="
+      )
     }
   })
 })

@@ -70,8 +70,8 @@ contract PWPegger is IPWPegger {
         pwconfig.keeper = _newKeeper;
     }
 
-    function updateCalibratorProxy(address _newCalibrator) external override onlyAdmin() {
-        pwconfig.calibrator = _newCalibrator;
+    function updateCalibratorProxy(address _newCalibratorProxy) external override onlyAdmin() {
+        pwconfig.calibratorProxy = _newCalibratorProxy;
     }
 
     function updateVault(address _newVault) external override onlyAdmin() {
@@ -180,12 +180,12 @@ contract PWPegger is IPWPegger {
 
         // Step-II: execute:
         pool.transferFrom(pwconfig.vault, address(this), xLPs);
-        pool.approve(address(pwconfig.calibrator), xLPs);
+        pool.approve(address(pwconfig.calibratorProxy), xLPs);
 
-        ICalibratorProxy calibrator = ICalibratorProxy(pwconfig.calibrator);
+        ICalibratorProxy calibratorProxy = ICalibratorProxy(pwconfig.calibratorProxy);
 
         if (direction == PWLibrary.PriceDirection.Up) {
-            calibrator.calibratePurelyViaPercentOfLPs_UP(
+            calibratorProxy.calibratePurelyViaPercentOfLPs_UP(
                 pool,
                 xLPs,
                 1, // numerator
@@ -193,7 +193,7 @@ contract PWPegger is IPWPegger {
                 pwconfig.vault
             );
         } else if (direction == PWLibrary.PriceDirection.Down) {
-            calibrator.calibratePurelyViaPercentOfLPs_DOWN(
+            calibratorProxy.calibratePurelyViaPercentOfLPs_DOWN(
                 pool,
                 xLPs,
                 1,
