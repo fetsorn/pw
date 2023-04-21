@@ -72,7 +72,7 @@ async function mn() {
     // keeper: string
     keeper: keeper,
     // calibrator: string
-    calibrator: calibratorProxy.address,
+    calibratorProxy: calibratorProxy.address,
     // vault: string
     vault: currentLPHolder,
     // pool: string
