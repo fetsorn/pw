@@ -2,11 +2,7 @@ import { Calibrator__factory } from "~/typechain/factories/Calibrator__factory"
 import { CalibratorProxy__factory } from "~/typechain"
 import Big from "big.js"
 import { ethers } from "hardhat"
-import {
-  BigNumber,
-  BigNumberish,
-  Signer,
-} from "ethers"
+import { BigNumber, BigNumberish, Signer } from "ethers"
 import { ERC20PresetFixedSupply } from "~/typechain/ERC20PresetFixedSupply"
 import { ERC20PresetFixedSupply__factory } from "~/typechain/factories/ERC20PresetFixedSupply__factory"
 import { OGXFactory } from "~/typechain/OGXFactory"
@@ -16,8 +12,8 @@ import { OGXRouter02 } from "~/typechain/OGXRouter02"
 import { WrappedNative } from "~/typechain/WrappedNative"
 import { WrappedNative__factory } from "~/typechain/factories/WrappedNative__factory"
 
-const OGXRouter02Json = require('../contracts/ogx/precompiled/OGXRouter02.json');
-const OGXFactoryJson = require('../contracts/ogx/precompiled/OGXFactory.json');
+const OGXRouter02Json = require("../artifacts/@gton-capital/ogs-periphery/contracts/OGXRouter02.sol/OGXRouter02.json")
+const OGXFactoryJson = require("../artifacts/@gton-capital/ogs-core/contracts/OGXFactory.sol/OGXFactory.json")
 
 export const mapValue = (x: BigNumberish) =>
   new Big(x.toString()).div(1e18).toNumber()
@@ -33,19 +29,24 @@ export async function buildPool(
   ogxtTokenLiq: BigNumber,
   quoteTokenLiq: BigNumber
 ) {
-  const factoryFactory = (await ethers.getContractFactory(
+  const factoryFactory = await ethers.getContractFactory(
     OGXFactoryJson.abi,
     OGXFactoryJson.bytecode
-  ))
-  const factory = await factoryFactory.connect(wallet).deploy(wallet.address) as OGXFactory
+  )
+  const factory = (await factoryFactory
+    .connect(wallet)
+    .deploy(wallet.address)) as OGXFactory
 
   await factory.setFeeTo(feeGetter)
 
-  const routerFactory = (await ethers.getContractFactory(
+  const routerFactory = await ethers.getContractFactory(
     OGXRouter02Json.abi,
     OGXRouter02Json.bytecode
-  ))
-  const router = await routerFactory.deploy(factory.address, weth.address) as OGXRouter02
+  )
+  const router = (await routerFactory.deploy(
+    factory.address,
+    weth.address
+  )) as OGXRouter02
 
   const createPairResult = await factory.createPair(
     ogxtToken.address,
@@ -153,7 +154,7 @@ export type CalibrateInput = {
 
 export enum CalibrateDirection {
   Up,
-  Down,
+  Down
 }
 
 export type ProxyCalibrateInput = {
@@ -219,12 +220,19 @@ export async function prepareTokensAndPoolsForProxy(cfg: ProxyCalibrateInput) {
     quoteToken.address
   )
 
+  await ogxtToken
+    .connect(cfg.deployer)
+    .approve(calibrator.address, BigNumber.from(cfg.liqOGXT))
+  await quoteToken
+    .connect(cfg.deployer)
+    .approve(calibrator.address, BigNumber.from(cfg.liqQuote))
+
   return {
     calibratorProxy,
     calibrator,
     builtPoolResponse,
     ogxtToken,
-    quoteToken,
+    quoteToken
   }
 }
 

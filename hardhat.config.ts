@@ -1,16 +1,15 @@
 import "@typechain/hardhat"
+import "@nomiclabs/hardhat-ethers"
 import "@nomiclabs/hardhat-waffle"
 import "hardhat-abi-exporter"
 import "@nomiclabs/hardhat-etherscan"
 
-require('dotenv').config();
-import { resolve } from "path";
-import { config as dotenvConfig } from "dotenv";
-dotenvConfig({ path: resolve(__dirname, "./.env") });
+require("dotenv").config()
+import { resolve } from "path"
+import { config as dotenvConfig } from "dotenv"
+dotenvConfig({ path: resolve(__dirname, "./.env") })
 
-const {
-  PRIVATE_KEY,
-} = process.env;
+const { PRIVATE_KEY } = process.env
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -49,24 +48,33 @@ export default {
         },
       },
       {
-        version: '0.6.6',
+        version: "0.6.6",
         settings: {
           optimizer: {
             enabled: true,
-            runs: 999999
-          }
+            runs: 999999,
+          },
         },
-        evmVersion: 'istanbul'
+        evmVersion: "istanbul",
       },
       {
-        version: '0.5.16',
+        version: "0.6.12",
         settings: {
           optimizer: {
             enabled: true,
-            runs: 999999
-          }
+            runs: 999999,
+          },
         },
-        evmVersion: 'istanbul'
+        evmVersion: "istanbul",
+      },
+      {
+        version: "0.5.16",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
       },
     ],
   },

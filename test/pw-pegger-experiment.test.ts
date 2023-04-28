@@ -10,8 +10,23 @@ import { PWPeggerConfig } from "./pegger"
 import {
   prepareTokensAndPoolsForProxy,
   CalibrateDirection,
-  ProxyCalibrateInput,
+  ProxyCalibrateInput
 } from "./pool"
+
+import { OGXRouter02 } from "~/typechain/OGXRouter02"
+
+async function getPrice(
+  router: OGXRouter02,
+  ogxtToken: string,
+  quoteToken: string
+): Promise<string> {
+  const amountsIn = "10000"
+  let [amountOGXT, amountQuote] = await router.getAmountsOut(amountsIn, [
+    ogxtToken,
+    quoteToken
+  ])
+  return amountOGXT.div(amountQuote).toString()
+}
 
 const remove18Decimals = (val: string): string => {
   const gtonDecimals = 18
@@ -42,15 +57,15 @@ const updateContext = async (
     liqQuote: new Big(200_000).mul(1e18).toFixed(),
     base: {
       name: "OGXT",
-      symbol: "OGXT",
+      symbol: "OGXT"
     },
     quote: {
       name: "simTSLA",
-      symbol: "simTSLA",
+      symbol: "simTSLA"
     },
     deployer: vault,
     feeGetter: feeGetter.address,
-    ...overrideProxyCalibrateInput,
+    ...overrideProxyCalibrateInput
   })
 
   const config: PWPeggerConfig = {
@@ -61,17 +76,17 @@ const updateContext = async (
     pool: proxyContext.builtPoolResponse.pair.address,
     quoteToken: proxyContext.quoteToken.address,
     /*
-	  uint emergencyth - 50% (0.5 * 10^6)
-	  uint volatilityth - 3% (0.03 * 10^6)
-	  uint frontrunth - 2% (0.02 * 10^6);
-	*/
+      uint emergencyth - 50% (0.5 * 10^6)
+      uint volatilityth - 3% (0.03 * 10^6)
+      uint frontrunth - 2% (0.02 * 10^6);
+    */
     // emergencyth: new Big(0.5).mul(1e6).toFixed(),
     emergencyth: new Big(0.000804).mul(1e6).toFixed(),
     // volatilityth: new Big(0.03).mul(1e6).toFixed(),
     volatilityth: new Big(0.000002).mul(1e6).toFixed(),
     // frontrunth: new Big(0.02).mul(1e6).toFixed(),
     frontrunth: new Big(0.000001).mul(1e6).toFixed(),
-    decimals: 6,
+    decimals: 6
   }
 
   const pwpeggerResp = await pwpeggerFactory.deploy(config)
@@ -80,7 +95,7 @@ const updateContext = async (
   return {
     pwpegger,
     pwpeggerConfig: config,
-    proxyContext,
+    proxyContext
   }
 }
 
@@ -99,13 +114,13 @@ describe("PW Pegger - Debugging Test", () => {
       mintOGXT: ogxtMint,
       mintQuote: simTSLAMint,
       liqOGXT: ogxtPoolLiq,
-      liqQuote: simTSLAPoolLiq,
+      liqQuote: simTSLAPoolLiq
     })
 
     // Utility Info
     const [calibratorBaseAddr, token0Addr] = await Promise.all([
       context.proxyContext.calibrator.base(),
-      context.proxyContext.builtPoolResponse.pair.token0(),
+      context.proxyContext.builtPoolResponse.pair.token0()
     ])
 
     const ogxtAddr = context.proxyContext.ogxtToken.address
@@ -114,33 +129,47 @@ describe("PW Pegger - Debugging Test", () => {
     const ogxtTokenIdx = ogxtAddr === token0Addr ? 0 : 1
     const simTSLATokenIdx = simTSLAAddr === token0Addr ? 0 : 1
 
-    console.log({
-      label: "Init Data for Tokens",
-      ogxtAddr,
-      ogxtTokenIdx,
-      simTSLAAddr,
-      simTSLATokenIdx,
-    })
+    // console.log({
+    //   label: "Init Data for Tokens",
+    //   ogxtAddr,
+    //   ogxtTokenIdx,
+    //   simTSLAAddr,
+    //   simTSLATokenIdx
+    // })
 
-    console.log({
-      label: "Start Liquidity",
-      ogxtPoolLiq,
-      simTSLAPoolLiq,
-    })
+    // console.log({
+    //   label: "Start Liquidity",
+    //   ogxtPoolLiq,
+    //   simTSLAPoolLiq
+    // })
 
-    console.log({
-      label: "Base address from Calibrator",
-      calibratorBaseAddr,
-    })
+    // console.log({
+    //   label: "Base address from Calibrator",
+    //   calibratorBaseAddr
+    // })
 
     // At this point in time the price of simTSLA in OGXT is about 803
     // Test Cases
     // const TEST_CASES = [176.09, 180.54, 181.23, 180.31, 200.57, 160.75, 192.3]
     // const TEST_CASES = [810, 807, 811, 800]
-    const TEST_CASES = [810]
+    const TEST_CASES = [810, 803]
 
     for (let i = 0; i < TEST_CASES.length; i += 1) {
       const newPrice = TEST_CASES[i]
+      console.log(
+        (
+          await getPrice(
+            context.proxyContext.builtPoolResponse.router,
+            context.proxyContext.ogxtToken.address,
+            context.proxyContext.quoteToken.address
+          )
+        ).toString()
+      )
+      const [
+        a,
+        b
+      ] = await context.proxyContext.builtPoolResponse.pair.getReserves()
+      console.log(a.toString(), b.toString())
 
       // Approve for Vault
       await context.proxyContext.builtPoolResponse.pair
@@ -160,11 +189,11 @@ describe("PW Pegger - Debugging Test", () => {
       )
 
       // Output - 1
-      console.log("\n\n", {
-        label: "Raw Data - 1",
-        reservesBeforeOGXT: reservesBefore[ogxtTokenIdx].toString(),
-        reservesBeforeSimTSLA: reservesBefore[simTSLATokenIdx].toString(),
-      })
+      // console.log("\n\n", {
+      //   label: "Raw Data - 1",
+      //   reservesBeforeOGXT: reservesBefore[ogxtTokenIdx].toString(),
+      //   reservesBeforeSimTSLA: reservesBefore[simTSLATokenIdx].toString()
+      // })
 
       // Update
       const newVal = interventionPriceWithDecimals(newPrice)
@@ -190,25 +219,25 @@ describe("PW Pegger - Debugging Test", () => {
           .toString(),
         diffSimTSLA: reservesBefore[simTSLATokenIdx]
           .sub(reservesAfter[simTSLATokenIdx])
-          .toString(),
+          .toString()
       })
 
-      console.log({
-        label: "Human-readable Data - 2",
-        diffOGXT: remove18Decimals(
-          reservesBefore[ogxtTokenIdx]
-            .sub(reservesAfter[ogxtTokenIdx])
-            .toString()
-        ),
-        diffSimTSLA: remove18Decimals(
-          reservesBefore[simTSLATokenIdx]
-            .sub(reservesAfter[simTSLATokenIdx])
-            .toString()
-        ),
-      })
-      console.log(
-        "=======================\n=======================\n======================="
-      )
+      // console.log({
+      //   label: "Human-readable Data - 2",
+      //   diffOGXT: remove18Decimals(
+      //     reservesBefore[ogxtTokenIdx]
+      //       .sub(reservesAfter[ogxtTokenIdx])
+      //       .toString()
+      //   ),
+      //   diffSimTSLA: remove18Decimals(
+      //     reservesBefore[simTSLATokenIdx]
+      //       .sub(reservesAfter[simTSLATokenIdx])
+      //       .toString()
+      //   )
+      // })
+      // console.log(
+      //   "=======================\n=======================\n======================="
+      // )
     }
   })
 })

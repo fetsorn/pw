@@ -3,12 +3,10 @@ pragma solidity >=0.8.0;
 
 import "./interfaces/ICalibrator.sol";
 
-
 import "hardhat/console.sol";
 
 /// @title Calibrator
 contract Calibrator is ICalibrator {
-
     address public owner;
     IERC20 public base;
     IUniswapV2Router02 public router;
@@ -112,6 +110,7 @@ contract Calibrator is ICalibrator {
         retrieve(pool, to, token);
     }
 
+    // function calibrate(
     function calibrateUp(
         IUniswapV2Pair pool,
         uint256 liquidity,
@@ -122,10 +121,10 @@ contract Calibrator is ICalibrator {
         IERC20 token = getQuoteToken(pool);
         remove(pool, token, liquidity);
         // console.log("amountBuy: %s", amountBuy);
-        // console.log("balance before - b: %s, q: %s", base.balanceOf(address(this)), token.balanceOf(address(this)));
+        console.log("balance before - b: %s, q: %s", base.balanceOf(address(this)), token.balanceOf(address(this)));
         // buy base for `amountBuy`
         buy(token, amountBuy);
-        // console.log("balance after - b: %s, q: %s", base.balanceOf(address(this)), token.balanceOf(address(this)));
+        console.log("balance after - b: %s, q: %s", base.balanceOf(address(this)), token.balanceOf(address(this)));
         // add liquidity for all quote token and have some base left
         add(pool, token);
         // send base and lp to `to`
@@ -241,7 +240,7 @@ contract Calibrator is ICalibrator {
         uint256 balanceOfToken = token.balanceOf(address(this));
         uint256 balanceOfBase = base.balanceOf(address(this));
 
-        base.approve(address(router), balanceOfToken);
+        base.approve(address(router), balanceOfBase);
         token.approve(address(router), balanceOfToken);
 
         uint256 amountQuoteAdd = balanceOfToken;
@@ -293,6 +292,7 @@ contract Calibrator is ICalibrator {
             );
         }
 
+        console.log("AAA", amountQuoteAdd, amountBaseAdd);
         (uint256 amountA, uint256 amountB, uint256 liq) = router.addLiquidity(
             address(token),
             address(base),
@@ -317,6 +317,7 @@ contract Calibrator is ICalibrator {
     // **** ESTIMATE FUNCTIONS ****
     function estimateNow(
         IUniswapV2Pair pool,
+        // uint256 liquidityRemove,
         uint256 amountToRemove,
         uint256 amountBuy
     )
@@ -331,6 +332,7 @@ contract Calibrator is ICalibrator {
     {
         Pool memory pBefore;
 
+        // IERC20 token = tokenFromPool(pool);
         IERC20 token = getQuoteToken(pool);
         (pBefore.reserveBase, pBefore.reserveQuote) = getReserves(
             pool,
@@ -342,6 +344,7 @@ contract Calibrator is ICalibrator {
 
         (Pool memory pAfter, Wallet memory wAfter) = estimate(
             pBefore,
+            // liquidityRemove,
             amountToRemove,
             amountBuy
         );
@@ -363,6 +366,7 @@ contract Calibrator is ICalibrator {
             uint256 amountTokenSell
         )
     {
+        // IERC20 token = tokenFromPool(pool);
         IERC20 token = getQuoteToken(pool);
         (uint256 reserveBaseBefore, uint256 reserveQuoteBefore) = getReserves(
             pool,
@@ -388,6 +392,7 @@ contract Calibrator is ICalibrator {
             uint256 amountTokenBuy
         )
     {
+        // IERC20 token = tokenFromPool(pool);
         IERC20 token = getQuoteToken(pool);
         (uint256 reserveBaseBefore, uint256 reserveQuoteBefore) = getReserves(
             pool,
@@ -406,11 +411,13 @@ contract Calibrator is ICalibrator {
 
     function estimate(
         Pool memory pBefore,
+        // uint256 liquidityRemove,
         uint256 amountToRemove,
         uint256 amountBaseBuy
     ) public view returns (Pool memory pAfter, Wallet memory wAfter) {
         (Pool memory pAfterRemove, Wallet memory wAfterRemove) = estimateRemove(
             pBefore,
+            // liquidityRemove
             amountToRemove
         );
 
@@ -429,6 +436,7 @@ contract Calibrator is ICalibrator {
         wAfter = wAfterAdd;
     }
 
+    // function estimateRemove(Pool memory pBefore, uint256 liquidityRemove)
     function estimateRemove(Pool memory pBefore, uint256 amountToRemove)
         public
         pure
@@ -443,9 +451,12 @@ contract Calibrator is ICalibrator {
 
         totalSupply = mintFee(reserveBase, reserveQuote, totalSupply, kLast);
 
+        // uint256 amountBase = (liquidityRemove * reserveBase) / totalSupply;
         uint256 amountBase = (amountToRemove * reserveBase) / totalSupply;
+        // uint256 amountQuote = (liquidityRemove * reserveQuote) / totalSupply;
         uint256 amountQuote = (amountToRemove * reserveQuote) / totalSupply;
 
+        // pAfter.totalSupply = totalSupply - liquidityRemove;
         pAfter.totalSupply = totalSupply - amountToRemove;
 
         wAfter.amountBase = amountBase;
@@ -540,6 +551,7 @@ contract Calibrator is ICalibrator {
             uint256
         )
     {
+        // IERC20 token = tokenFromPool(pool);
         IERC20 token = getQuoteToken(pool);
         (uint256 reserveBaseBefore, uint256 reserveQuoteBefore) = getReserves(
             pool,
@@ -564,6 +576,7 @@ contract Calibrator is ICalibrator {
             uint256
         )
     {
+        // IERC20 token = tokenFromPool(pool);
         IERC20 token = getQuoteToken(pool);
         (uint256 reserveBaseBefore, uint256 reserveQuoteBefore) = getReserves(
             pool,
@@ -742,6 +755,7 @@ contract Calibrator is ICalibrator {
         uint256 reserveQuoteBefore,
         uint256 totalSupplyBefore,
         uint256 kLastBefore,
+        // uint256 liquidityRemove
         uint256 amountToRemove
     )
         override
@@ -763,9 +777,12 @@ contract Calibrator is ICalibrator {
             kLastBefore
         );
 
+        // amountBaseAfter = (liquidityRemove * reserveBaseBefore) / totalSupply;
         amountBaseAfter = (amountToRemove * reserveBaseBefore) / totalSupply;
+        // amountQuoteAfter = (liquidityRemove * reserveQuoteBefore) / totalSupply;
         amountQuoteAfter = (amountToRemove * reserveQuoteBefore) / totalSupply;
 
+        // totalSupplyAfter = totalSupplyBefore - liquidityRemove;
         totalSupplyAfter = totalSupplyBefore - amountToRemove;
 
         reserveBaseAfter = reserveBaseBefore - amountBaseAfter;
@@ -894,6 +911,7 @@ contract Calibrator is ICalibrator {
     /**
      * returns quote token
      */
+    // function tokenFromPool(IUniswapV2Pair pool)
     function getQuoteToken(IUniswapV2Pair pool)
         override
         public
@@ -917,7 +935,7 @@ contract Calibrator is ICalibrator {
             : (tokenB, tokenA);
         require(token0 != address(0), "UniswapV2Library: ZERO_ADDRESS");
     }
-    
+
     function getRouter() override public view returns (address rtr) {
         rtr = address(router);
     }
@@ -986,7 +1004,6 @@ contract Calibrator is ICalibrator {
         uint256 totalSupply,
         uint256 kLast
     ) internal pure returns (uint256 totalSupplyNew) {
-        
         // Default Uniswap V2 params, might need changing if DEX has different fees
         if (kLast != 0) {
             uint256 rootK = sqrt(reserve0 * reserve1);
@@ -1016,6 +1033,7 @@ contract Calibrator is ICalibrator {
 
     // **** LOG FUNCTION ****
     // function log(IUniswapV2Pair pool, string memory s) internal {
+    //     IERC20 token = tokenFromPool(pool);
     //     IERC20 token = getQuoteToken(pool);
     //     console.log(s);
     //     console.log(
