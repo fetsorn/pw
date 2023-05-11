@@ -1,14 +1,12 @@
 import { ethers, waffle } from "hardhat"
 import { BigNumber as BN } from "bignumber.js";
 import { BigNumber, ContractReceipt, ContractTransaction } from "ethers"
-import { TestERC20 } from "../typechain/TestERC20"
-import { WrappedNative } from "../typechain/WrappedNative"
-import { OGXPair } from "../typechain/OGXPair"
-import { OGXFactory } from "../typechain/OGXFactory"
-import { OGXRouter02 } from "../typechain/OGXRouter02"
+import { ERC20PresetFixedSupply } from "../typechain/ERC20PresetFixedSupply"
+import { IOGXPair } from "../typechain/IOGXPair"
+import { IOGXRouter02 } from "../typechain/IOGXRouter02"
 import { uniswapFixture } from "./shared/fixtures"
 import { expect } from "./shared/expect"
-import { expandTo18Decimals, ZERO_ADDR } from "./shared/utilities"
+import { expandTo18Decimals } from "./shared/utilities"
 
 describe("OGX", () => {
     const [wallet, other] = waffle.provider.getWallets()
@@ -19,18 +17,14 @@ describe("OGX", () => {
         loadFixture = waffle.createFixtureLoader([wallet, other])
     })
 
-    let tokenBase: TestERC20
-    let tokenQuote: TestERC20
-    let weth: WrappedNative
-    let factory: OGXFactory
-    let router: OGXRouter02
-    let pair: OGXPair
+    let tokenBase: ERC20PresetFixedSupply
+    let tokenQuote: ERC20PresetFixedSupply
+    let router: IOGXRouter02
+    let pair: IOGXPair
 
     beforeEach("deploy test contracts", async () => {
         ;({ tokenBase,
             tokenQuote,
-            weth,
-            factory,
             router,
             pair } = await loadFixture(uniswapFixture))
     })
@@ -57,7 +51,7 @@ describe("OGX", () => {
         // preserve minimum liquidity required for 3 decimal precision
         const minimumLiquidity = totalSupply.mul(100000).div(reserveBaseInvariant.toString());
 
-        expect(availableLiquidity).to.be.gte(minimumLiquidity)
+        expect(availableLiquidity).to.be.gte(minimumLiquidity);
 
         const liquidity = availableLiquidity.sub(minimumLiquidity);
 
@@ -154,32 +148,32 @@ describe("OGX", () => {
         { targetRatioBase: 4,
           targetRatioQuote: 10,
           reserveBase: "10000000000000000000",
-          reserveQuote: "25053252602716552360",
-          liquidityBalance: "15804075533407108274"
+          reserveQuote: "25053193364400984200",
+          liquidityBalance: "15803893091560267185"
         },
         { targetRatioBase: 5,
           targetRatioQuote: 10,
           reserveBase: "10000000000000000000",
-          reserveQuote: "20053868103149417317",
-          liquidityBalance: "14137265882645758441"
+          reserveQuote: "20053867624313321125",
+          liquidityBalance: "14137140215826058127"
         },
         { targetRatioBase: 4,
           targetRatioQuote: 10,
           reserveBase: "10000000000000000000",
-          reserveQuote: "24932416724784962306",
-          liquidityBalance: "15760796165299501950"
+          reserveQuote: "24932583523368831226",
+          liquidityBalance: "15760732393118868969"
         },
         { targetRatioBase: 10,
           targetRatioQuote: 8,
           reserveBase: "10000000000000000000",
-          reserveQuote: "8013692074698374629",
-          liquidityBalance: "8929518469099936507"
+          reserveQuote: "8013680506685432793",
+          liquidityBalance: "8929429978888105964"
         },
         { targetRatioBase: 1,
           targetRatioQuote: 12,
           reserveBase: "10000000000000000000",
-          reserveQuote: "119906002827557219823",
-          liquidityBalance: "34501929616751365015"
+          reserveQuote: "119903331804982423964",
+          liquidityBalance: "34500993428091088712"
         },
     ]
 
