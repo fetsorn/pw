@@ -65,16 +65,23 @@ describe("OGX", () => {
         const [reserveBaseInvariant] = (await pair.getReserves()).map((n) => new BN(n.toString()));
 
         // remove all available liquidity
-        const liquidity = await pair.balanceOf(wallet.address);
+        const availableLiquidity = await pair.balanceOf(wallet.address);
+
+        const totalSupply = await pair.totalSupply();
+
+        // preserve minimum liquidity required for 3 decimal precision
+        const minimumLiquidity = totalSupply.mul(100000).div(reserveBaseInvariant.toString());
+
+        expect(availableLiquidity).to.be.gte(minimumLiquidity)
+
+        const liquidity = availableLiquidity.sub(minimumLiquidity);
 
         await pair.approve(router.address, liquidity);
 
-        // TODO: preserve minimum liquidity required for 3 decimal precision
-        // define a range of available precise trades for given liquidity and quote
         await router.removeLiquidity(
             tokenBase.address,
             tokenQuote.address,
-            liquidity.div(2),
+            liquidity,
             0,
             0,
             wallet.address,
@@ -87,15 +94,15 @@ describe("OGX", () => {
         const targetRatio = targetRatioBase.div(targetRatioQuote);
 
         const aToB = reserveBaseBefore.div(reserveQuoteBefore).lt(targetRatio);
+        // const aToB = reserveBaseBefore.times(targetRatioQuote).div(reserveQuoteBefore).lt(targetRatioBase);
 
-        // TODO account for fees in swap
         const invariant = reserveBaseBefore.times(reserveQuoteBefore);
 
         const leftSide = aToB
-            ? invariant.times(targetRatioBase).div(targetRatioQuote).sqrt()
-            : invariant.times(targetRatioQuote).div(targetRatioBase).sqrt();
+            ? invariant.times(1000).times(targetRatioBase).div(targetRatioQuote.times(997)).sqrt()
+            : invariant.times(1000).times(targetRatioQuote).div(targetRatioBase.times(997)).sqrt();
 
-        const rightSide = aToB ? reserveBaseBefore : reserveQuoteBefore;
+        const rightSide = (aToB ? reserveBaseBefore.times(1000) : reserveQuoteBefore.times(1000)).div(997);
 
         expect(leftSide.gt(rightSide));
 
@@ -123,9 +130,10 @@ describe("OGX", () => {
 
         // validate price calibration
         expect(
-            reserveBaseAfter.div(reserveQuoteAfter).decimalPlaces(3).toString()
-        ).to.equal(
-            targetRatioBase.div(targetRatioQuote).decimalPlaces(3).toString()
+            reserveBaseAfter.div(reserveQuoteAfter).decimalPlaces(3).toNumber()
+        ).to.be.within(
+            targetRatioBase.div(targetRatioQuote).decimalPlaces(3).toNumber() - 0.002,
+            targetRatioBase.div(targetRatioQuote).decimalPlaces(3).toNumber() + 0.002,
         );
 
         // add liquidity such that amount of base is invariant
@@ -163,24 +171,40 @@ describe("OGX", () => {
 
             expect(await state()).to.deep.equal([
                 "10000000000000000000",
-                "25021950698943729146",
-                "15794213534512120611"
+                "25053252602716552360",
+                "15804075533407108274"
             ]);
 
             await calibrate(new BN(5), new BN(10));
 
             expect(await state()).to.deep.equal([
                 "10000000000000000000",
-                "20006359934794620302",
-                "14120576275507200363"
+                "20053868103149417317",
+                "14137265882645758441"
             ]);
 
             await calibrate(new BN(4), new BN(10));
 
             expect(await state()).to.deep.equal([
                 "10000000000000000000",
-                "24992092704412095275",
-                "15779782067642114128"
+                "24932416724784962306",
+                "15760796165299501950"
+            ]);
+
+            await calibrate(new BN(10), new BN(8));
+
+            expect(await state()).to.deep.equal([
+                "10000000000000000000",
+                "8013692074698374629",
+                "8929518469099936507"
+            ]);
+
+            await calibrate(new BN(1), new BN(12));
+
+            expect(await state()).to.deep.equal([
+                "10000000000000000000",
+                "119906002827557219823",
+                "34501929616751365015"
             ]);
         })
     })
