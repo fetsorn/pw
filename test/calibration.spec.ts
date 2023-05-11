@@ -58,71 +58,129 @@ describe("OGX", () => {
         ]
     }
 
+    async function calibrate(
+        targetRatioBase: BN,
+        targetRatioQuote: BN
+    ) {
+        const [reserveBaseInvariant] = (await pair.getReserves()).map((n) => new BN(n.toString()));
+
+        // remove all available liquidity
+        const liquidity = await pair.balanceOf(wallet.address);
+
+        await pair.approve(router.address, liquidity);
+
+        // TODO: preserve minimum liquidity required for 3 decimal precision
+        // define a range of available precise trades for given liquidity and quote
+        await router.removeLiquidity(
+            tokenBase.address,
+            tokenQuote.address,
+            liquidity.div(2),
+            0,
+            0,
+            wallet.address,
+            await timestamp()
+        );
+
+        // calibrate pool to target ratio
+        const [reserveBaseBefore, reserveQuoteBefore] = (await pair.getReserves()).map((n) => new BN(n.toString()));
+
+        const targetRatio = targetRatioBase.div(targetRatioQuote);
+
+        const aToB = reserveBaseBefore.div(reserveQuoteBefore).lt(targetRatio);
+
+        // TODO account for fees in swap
+        const invariant = reserveBaseBefore.times(reserveQuoteBefore);
+
+        const leftSide = aToB
+            ? invariant.times(targetRatioBase).div(targetRatioQuote).sqrt()
+            : invariant.times(targetRatioQuote).div(targetRatioBase).sqrt();
+
+        const rightSide = aToB ? reserveBaseBefore : reserveQuoteBefore;
+
+        expect(leftSide.gt(rightSide));
+
+        const amountIn = leftSide.minus(rightSide).integerValue();
+
+        if (aToB) {
+            await tokenBase.approve(router.address, amountIn.toString());
+        } else {
+            await tokenQuote.approve(router.address, amountIn.toString());
+        }
+
+        const path = aToB
+            ? [tokenBase.address, tokenQuote.address]
+            : [tokenQuote.address, tokenBase.address];
+
+        await router.swapExactTokensForTokens(
+            amountIn.toString(),
+            0,
+            path,
+            wallet.address,
+            await timestamp()
+        );
+
+        const [reserveBaseAfter, reserveQuoteAfter] = (await pair.getReserves()).map((n) => new BN(n.toString()));
+
+        // validate price calibration
+        expect(
+            reserveBaseAfter.div(reserveQuoteAfter).decimalPlaces(3).toString()
+        ).to.equal(
+            targetRatioBase.div(targetRatioQuote).decimalPlaces(3).toString()
+        );
+
+        // add liquidity such that amount of base is invariant
+        const amountBaseDesired = reserveBaseInvariant.minus(reserveBaseAfter);
+
+        // Library.quote()
+        const amountQuoteDesired = amountBaseDesired.times(reserveQuoteAfter).div(reserveBaseAfter).integerValue();
+
+        await tokenBase.approve(router.address, amountBaseDesired.toString());
+
+        await tokenQuote.approve(router.address, amountQuoteDesired.toString());
+
+        await router.addLiquidity(
+            tokenBase.address,
+            tokenQuote.address,
+            amountBaseDesired.toString(),
+            amountQuoteDesired.toString(),
+            0,
+            0,
+            wallet.address,
+            await timestamp()
+        );
+    }
+
     describe("#calibrate", async () => {
         it("matches estimates", async () => {
 
             expect(await state()).to.deep.equal([
                 "10000000000000000000",
-                "50000000000000000000",
-                "22360679774997895964"
+                "49933035714285714285",
+                "22321428571428570428"
             ]);
 
-            const liquidity = await pair.balanceOf(wallet.address);
-
-            await pair.approve(router.address, liquidity);
-
-            await router.removeLiquidity(
-                tokenBase.address,
-                tokenQuote.address,
-                liquidity,
-                0,
-                0,
-                wallet.address,
-                await timestamp()
-            );
+            await calibrate(new BN(4), new BN(10));
 
             expect(await state()).to.deep.equal([
-                "448",
-                "2237",
-                "0"
+                "10000000000000000000",
+                "25021950698943729146",
+                "15794213534512120611"
             ]);
 
-            const [reserveBaseBN, reserveTokenBN] = await pair.getReserves();
-
-            const reserveBase = new BN(reserveBaseBN.toString());
-
-            const reserveToken = new BN(reserveTokenBN.toString());
-
-            const targetRatioNumerator = 4;
-
-            const targetRatioDenominator = 10;
-
-            const targetRatio = targetRatioNumerator/targetRatioDenominator;
-
-            const aToB = reserveBase.div(reserveToken).lt(targetRatio);
-
-            const invariant = reserveBase.times(reserveToken);
-
-            const leftSide = invariant.times(targetRatioNumerator).div(targetRatioDenominator).sqrt();
-
-            const rightSide = reserveBase;
-
-            const amountIn = leftSide.minus(rightSide).integerValue();
-
-            await tokenBase.approve(router.address, amountIn.toString());
-
-            await router.swapExactTokensForTokens(
-                amountIn.toString(),
-                0,
-                [tokenBase.address, tokenQuote.address],
-                wallet.address,
-                await timestamp()
-            );
+            await calibrate(new BN(5), new BN(10));
 
             expect(await state()).to.deep.equal([
-                "633",
-                "1585",
-                "0"
+                "10000000000000000000",
+                "20006359934794620302",
+                "14120576275507200363"
+            ]);
+
+            await calibrate(new BN(4), new BN(10));
+
+            expect(await state()).to.deep.equal([
+                "10000000000000000000",
+                "24992092704412095275",
+                "15779782067642114128"
             ]);
         })
     })
