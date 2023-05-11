@@ -155,6 +155,10 @@ export const uniswapFixture: Fixture<UniswapFixture> = async function(
     timestamp + 3600
   )
 
+  // base reserve     "10000000000000000000"
+  // quote reserve    "49933035714285714285"
+  // liquidityBalance "22321428571428570428"
+
   // `other` account adds liquidity
   // liquidityBase = BigNumber.from(1)
 

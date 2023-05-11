@@ -25,7 +25,6 @@ describe("OGX", () => {
     let factory: OGXFactory
     let router: OGXRouter02
     let pair: OGXPair
-    let startingBalance: BigNumber
 
     beforeEach("deploy test contracts", async () => {
         ;({ tokenBase,
@@ -34,8 +33,6 @@ describe("OGX", () => {
             factory,
             router,
             pair } = await loadFixture(uniswapFixture))
-
-        startingBalance = await wallet.provider.getBalance(wallet.address)
     })
 
     async function timestamp() {
@@ -46,25 +43,13 @@ describe("OGX", () => {
         return timestamp
     }
 
-    async function state() {
-        const [reserveBase, reserveToken] = await pair.getReserves();
-
-        const liquidity = await pair.balanceOf(wallet.address)
-
-        return [
-            reserveBase.toString(),
-            reserveToken.toString(),
-            liquidity.toString()
-        ]
-    }
-
     async function calibrate(
         targetRatioBase: BN,
         targetRatioQuote: BN
     ) {
         const [reserveBaseInvariant] = (await pair.getReserves()).map((n) => new BN(n.toString()));
 
-        // remove all available liquidity
+        /* Remove liquidity */
         const availableLiquidity = await pair.balanceOf(wallet.address);
 
         const totalSupply = await pair.totalSupply();
@@ -88,33 +73,32 @@ describe("OGX", () => {
             await timestamp()
         );
 
-        // calibrate pool to target ratio
+        /* Swap to price */
         const [reserveBaseBefore, reserveQuoteBefore] = (await pair.getReserves()).map((n) => new BN(n.toString()));
 
         const targetRatio = targetRatioBase.div(targetRatioQuote);
 
-        const aToB = reserveBaseBefore.div(reserveQuoteBefore).lt(targetRatio);
-        // const aToB = reserveBaseBefore.times(targetRatioQuote).div(reserveQuoteBefore).lt(targetRatioBase);
+        const baseToQuote = reserveBaseBefore.div(reserveQuoteBefore).lt(targetRatio);
 
         const invariant = reserveBaseBefore.times(reserveQuoteBefore);
 
-        const leftSide = aToB
+        const leftSide = baseToQuote
             ? invariant.times(1000).times(targetRatioBase).div(targetRatioQuote.times(997)).sqrt()
             : invariant.times(1000).times(targetRatioQuote).div(targetRatioBase.times(997)).sqrt();
 
-        const rightSide = (aToB ? reserveBaseBefore.times(1000) : reserveQuoteBefore.times(1000)).div(997);
+        const rightSide = (baseToQuote ? reserveBaseBefore.times(1000) : reserveQuoteBefore.times(1000)).div(997);
 
         expect(leftSide.gt(rightSide));
 
         const amountIn = leftSide.minus(rightSide).integerValue();
 
-        if (aToB) {
+        if (baseToQuote) {
             await tokenBase.approve(router.address, amountIn.toString());
         } else {
             await tokenQuote.approve(router.address, amountIn.toString());
         }
 
-        const path = aToB
+        const path = baseToQuote
             ? [tokenBase.address, tokenQuote.address]
             : [tokenQuote.address, tokenBase.address];
 
@@ -136,7 +120,7 @@ describe("OGX", () => {
             targetRatioBase.div(targetRatioQuote).decimalPlaces(3).toNumber() + 0.002,
         );
 
-        // add liquidity such that amount of base is invariant
+        /* Add liquidity */
         const amountBaseDesired = reserveBaseInvariant.minus(reserveBaseAfter);
 
         // Library.quote()
@@ -158,54 +142,75 @@ describe("OGX", () => {
         );
     }
 
+    interface TestCase {
+        targetRatioBase: number;
+        targetRatioQuote: number;
+        reserveBase: string;
+        reserveQuote: string;
+        liquidityBalance: string;
+    }
+
+    const testCases = [
+        { targetRatioBase: 4,
+          targetRatioQuote: 10,
+          reserveBase: "10000000000000000000",
+          reserveQuote: "25053252602716552360",
+          liquidityBalance: "15804075533407108274"
+        },
+        { targetRatioBase: 5,
+          targetRatioQuote: 10,
+          reserveBase: "10000000000000000000",
+          reserveQuote: "20053868103149417317",
+          liquidityBalance: "14137265882645758441"
+        },
+        { targetRatioBase: 4,
+          targetRatioQuote: 10,
+          reserveBase: "10000000000000000000",
+          reserveQuote: "24932416724784962306",
+          liquidityBalance: "15760796165299501950"
+        },
+        { targetRatioBase: 10,
+          targetRatioQuote: 8,
+          reserveBase: "10000000000000000000",
+          reserveQuote: "8013692074698374629",
+          liquidityBalance: "8929518469099936507"
+        },
+        { targetRatioBase: 1,
+          targetRatioQuote: 12,
+          reserveBase: "10000000000000000000",
+          reserveQuote: "119906002827557219823",
+          liquidityBalance: "34501929616751365015"
+        },
+    ]
+
+    async function test(testCase: TestCase) {
+        const { targetRatioBase, targetRatioQuote } = testCase;
+
+        await calibrate(
+            new BN(targetRatioBase),
+            new BN(targetRatioQuote)
+        );
+
+        const [reserveBase, reserveToken] = await pair.getReserves();
+
+        const liquidityBalance = await pair.balanceOf(wallet.address)
+
+        const result = {
+            targetRatioBase,
+            targetRatioQuote,
+            reserveBase: reserveBase.toString(),
+            reserveQuote: reserveToken.toString(),
+            liquidityBalance: liquidityBalance.toString()
+        };
+
+        expect(result).to.deep.equal(testCase);
+    }
+
     describe("#calibrate", async () => {
         it("matches estimates", async () => {
-
-            expect(await state()).to.deep.equal([
-                "10000000000000000000",
-                "49933035714285714285",
-                "22321428571428570428"
-            ]);
-
-            await calibrate(new BN(4), new BN(10));
-
-            expect(await state()).to.deep.equal([
-                "10000000000000000000",
-                "25053252602716552360",
-                "15804075533407108274"
-            ]);
-
-            await calibrate(new BN(5), new BN(10));
-
-            expect(await state()).to.deep.equal([
-                "10000000000000000000",
-                "20053868103149417317",
-                "14137265882645758441"
-            ]);
-
-            await calibrate(new BN(4), new BN(10));
-
-            expect(await state()).to.deep.equal([
-                "10000000000000000000",
-                "24932416724784962306",
-                "15760796165299501950"
-            ]);
-
-            await calibrate(new BN(10), new BN(8));
-
-            expect(await state()).to.deep.equal([
-                "10000000000000000000",
-                "8013692074698374629",
-                "8929518469099936507"
-            ]);
-
-            await calibrate(new BN(1), new BN(12));
-
-            expect(await state()).to.deep.equal([
-                "10000000000000000000",
-                "119906002827557219823",
-                "34501929616751365015"
-            ]);
+            for (const testCase of testCases) {
+                await test(testCase);
+            }
         })
     })
 })
