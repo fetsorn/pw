@@ -3,10 +3,10 @@ import "@nomiclabs/hardhat-waffle"
 import "hardhat-abi-exporter"
 import "@nomiclabs/hardhat-etherscan"
 
-require('dotenv').config();
+// require('dotenv').config();
 import { resolve } from "path";
-import { config as dotenvConfig } from "dotenv";
-dotenvConfig({ path: resolve(__dirname, "./.env") });
+// import { config as dotenvConfig } from "dotenv";
+// dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 const {
   PRIVATE_KEY,
@@ -20,22 +20,22 @@ export default {
     localhost: {
       url: "http://127.0.0.1:8545",
     },
-    ftm: {
-      url: "https://rpcapi-tracing.fantom.network",
-      accounts: [PRIVATE_KEY],
-    },
-    ftmtestnet: {
-      url: "https://rpc.testnet.fantom.network",
-      accounts: [PRIVATE_KEY],
-    },
-    gton: {
-      url: "https://rpc.gton.network",
-      accounts: [PRIVATE_KEY],
-    },
-    gtonTestnet: {
-      url: "https://testnet.gton.network",
-      accounts: [PRIVATE_KEY],
-    },
+    // ftm: {
+    //   url: "https://rpcapi-tracing.fantom.network",
+    //   accounts: [PRIVATE_KEY],
+    // },
+    // ftmtestnet: {
+    //   url: "https://rpc.testnet.fantom.network",
+    //   accounts: [PRIVATE_KEY],
+    // },
+    // gton: {
+    //   url: "https://rpc.gton.network",
+    //   accounts: [PRIVATE_KEY],
+    // },
+    // gtonTestnet: {
+    //   url: "https://testnet.gton.network",
+    //   accounts: [PRIVATE_KEY],
+    // },
   },
   solidity: {
     compilers: [
